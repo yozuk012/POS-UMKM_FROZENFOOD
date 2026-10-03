@@ -1,0 +1,108 @@
+my-pos
+├── public
+├── src
+│   ├── app
+│   │   ├── auth
+│   │   │   ├── login
+│   │   │   │   └── page.js
+│   │   │   └── register
+│   │   │       └── page.js
+│   │   ├── bahan-baku
+│   │   │   ├── components
+│   │   │   │   ├── BahanBakuFormModal.jsx
+│   │   │   │   └── BahanBakuList.jsx
+│   │   │   └── page.js
+│   │   ├── category
+│   │   │   └── page.js
+│   │   ├── dashboard
+│   │   │   └── page.js
+│   │   ├── history
+│   │   │   ├── components
+│   │   │   │   ├── HistoryFilters.jsx
+│   │   │   │   └── HistoryList.jsx
+│   │   │   └── page.js
+│   │   ├── hpp
+│   │   │   ├── hitunghpp
+│   │   │   │   ├── components
+│   │   │   │   │   ├── Step1BahanBaku.jsx
+│   │   │   │   │   ├── Step2Operasional.jsx
+│   │   │   │   │   ├── Step3Hasil.jsx
+│   │   │   │   │   └── StepIndicator.jsx
+│   │   │   │   └── page.js
+│   │   │   └── hppproduk
+│   │   │       ├── components
+│   │   │       │   ├── HPPHeader.jsx
+│   │   │       │   └── HPPProductList.jsx
+│   │   │       └── page.js
+│   │   ├── product
+│   │   │   ├── components
+│   │   │   │   ├── ProductFilters.jsx
+│   │   │   │   ├── ProductFormModal.jsx
+│   │   │   │   ├── ProductHeader.jsx
+│   │   │   │   ├── ProductList.jsx
+│   │   │   │   └── ProductPagination.jsx
+│   │   │   └── page.js
+│   │   ├── report
+│   │   │   ├── components
+│   │   │   │   ├── ReportFilters.jsx
+│   │   │   │   ├── ReportSummaryCards.jsx
+│   │   │   │   └── ReportTable.jsx
+│   │   │   └── page.js
+│   │   ├── settings
+│   │   │   ├── profile
+│   │   │   │   ├── Change-Password
+│   │   │   │   │   └── page.js
+│   │   │   │   ├── edit-profile
+│   │   │   │   │   └── page.js
+│   │   │   │   ├── Persentase-Online
+│   │   │   │   │   └── page.js
+│   │   │   │   ├── switch-account
+│   │   │   │   │   └── page.js
+│   │   │   │   └── page.js
+│   │   │   └── layout.js
+│   │   ├── test-connection
+│   │   │   └── page.js
+│   │   ├── transection
+│   │   │   ├── components
+│   │   │   │   ├── ReceiptModal.jsx
+│   │   │   │   ├── TransactionFilters.jsx
+│   │   │   │   ├── TransactionOrderSummary.jsx
+│   │   │   │   ├── TransactionPaymentModal.jsx
+│   │   │   │   └── TransactionProductGrid.jsx
+│   │   │   └── page.js
+│   │   ├── globals.css
+│   │   ├── layout.js
+│   │   └── page.js
+│   ├── blueprint
+│   │   ├── AGENTS.md
+│   │   ├── CLAUDE.md
+│   │   ├── DATABASE.MD
+│   │   └── RELATION.md
+│   ├── components
+│   │   ├── PageLayout.js
+│   │   └── Sidebar.js
+│   ├── hooks
+│   │   ├── useAuth.js
+│   │   ├── useBahanBaku.js
+│   │   ├── useCategories.js
+│   │   ├── useConvert.js
+│   │   ├── useHistory.js
+│   │   ├── useHitungHpp.js
+│   │   ├── useHppProduk.js
+│   │   ├── useProducts.js
+│   │   ├── useReport.js
+│   │   └── useTransaction.js
+│   └── lib
+│       ├── productUtils.js
+│       └── supabase.js
+├── .env.local
+├── .env.production
+├── .gitignore
+├── eslint.config.mjs
+├── jsconfig.json
+├── next.config.mjs
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+└── tree.txt

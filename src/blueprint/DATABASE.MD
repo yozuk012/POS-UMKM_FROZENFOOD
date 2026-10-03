@@ -1,169 +1,204 @@
-Tentu! Ini adalah langkah yang sangat cerdas. Sebelum menyentuh kode, memahami **bisnis di balik setiap tabel dan field** akan membuat Anda jauh lebih cepat dan minim bug saat coding nanti. 
+Berikut adalah versi **`DATABASE.md`** yang telah disesuaikan dan diperbarui berdasarkan skema SQL terbaru. 
 
-Mari kita bedah ke-14 tabel ini secara lengkap, dengan contoh kasus nyata untuk usaha **Frozen Food** Anda.
-
----
-
-### 1. 🧑💼 `merchants` (Profil Pemilik Usaha)
-**Fungsi:** Menyimpan data profil pemilik akun. Tabel ini terhubung 1:1 dengan `auth.users` (Supabase Auth).
-*   `id` (UUID): ID unik dari Supabase Auth. Ini adalah "KTP" digital user.
-*   `full_name` (Varchar): Nama asli pemilik (misal: "Budi Santoso").
-*   `phone` (Varchar): Nomor HP/WA untuk kontak darurat atau notifikasi.
-*   `store_name` (Varchar): Nama Brand/Usaha utama (misal: "Frozen Food Pak Budi").
-*   `store_logo_url` (Text): URL gambar logo yang diupload ke bucket `UMKM POS/logo-toko`.
-*   `created_at` (Timestamp): Kapan akun ini pertama kali didaftarkan.
-
-### 2.  `stores` (Cabang Toko / Lokasi)
-**Fungsi:** Menyimpan data lokasi fisik tempat usaha beroperasi. 1 Merchant bisa punya banyak Store (Multi-cabang).
-*   `id` (Bigint): ID unik cabang toko.
-*   `user_id` (UUID): Foreign Key ke `merchants`. Menunjukkan siapa pemilik cabang ini.
-*   `name` (Varchar): Nama spesifik cabang (misal: "Cabang Pusat Depok", "Gudang Bekasi").
-*   `type` (Varchar): Jenis lokasi (misal: `frozen_food`, `gudang`, `outlet`).
-*   `address` (Text): Alamat lengkap cabang.
-*   `logo_url` (Varchar): Opsional. Jika cabang punya spanduk/logo berbeda dari brand utama.
-*   `is_active` (Boolean): `TRUE` jika toko masih buka, `FALSE` jika tutup sementara/permanen.
-*   `created_at` (Timestamp): Kapan cabang ini ditambahkan ke sistem.
-
-### 3. 🏷️ `categories` (Kategori Produk)
-**Fungsi:** Mengelompokkan produk agar laporan dan tampilan di kasir rapi.
-*   `id` (Bigint): ID unik kategori.
-*   `store_id` (Bigint): Kategori ini milik toko mana (karena tiap cabang bisa punya kategori beda).
-*   `name` (Varchar): Nama kategori (misal: "Nugget & Sosis", "Bakso", "Dimsum", "Minuman").
-*   `created_at` (Timestamp): Waktu pembuatan kategori.
-
-### 4.  `raw_materials` (Bahan Baku)
-**Fungsi:** Menyimpan daftar bahan mentah untuk membuat produk frozen food. Ini adalah kunci perhitungan HPP.
-*   `id` (Bigint): ID unik bahan baku.
-*   `store_id` (Bigint): Bahan ini disimpan di gudang/toko mana.
-*   `name` (Varchar): Nama bahan (misal: "Daging Ayam Giling", "Tepung Panir", "Kemasan Vakum").
-*   `unit` (Varchar): Satuan pembelian (misal: `gram`, `kg`, `liter`, `pcs`).
-*   `cost_per_unit` (Decimal): Harga beli per satuan (misal: Rp 50/gram). Ini akan dikalikan jumlah di resep untuk dapat HPP.
-*   `is_perishable` (Boolean): `TRUE` jika bahan cepat busuk (seperti daging/sayur), `FALSE` jika awet (tepung/kemasan).
-*   `shelf_life_days` (Int): Berapa hari bahan bisa bertahan (misal: Daging = 3 hari, Tepung = 180 hari).
-*   `created_at` (Timestamp): Kapan bahan ini didata.
-
-### 5. 🍗 `products` (Produk Jadi)
-**Fungsi:** Menyimpan barang jadi yang siap dijual ke pelanggan.
-*   `id` (Bigint): ID unik produk.
-*   `store_id` (Bigint): Produk ini dijual di toko mana.
-*   `category_id` (Bigint): Masuk ke kategori apa (misal: "Nugget & Sosis").
-*   `name` (Varchar): Nama produk (misal: "Nugget Ayam Original 500gr").
-*   `sku` (Varchar): Kode barang unik untuk stok (misal: "NUG-ORI-500").
-*   `type` (Varchar): Jenis produk, defaultnya `finished_good` (produk jadi).
-*   `unit` (Varchar): Satuan jual (misal: `pack`, `pcs`, `box`).
-*   `base_price` (Decimal): Harga dasar normal (harga offline/toko fisik).
-*   `hpp` (Decimal): Harga Pokok Penjualan (Modal per pack). Bisa diisi manual atau otomatis dari resep.
-*   `image_url` (Varchar): URL foto produk dari bucket `UMKM POS/product-toko`.
-*   `is_active` (Boolean): `TRUE` jika masih dijual, `FALSE` jika produk sudah dihentikan (discontinued).
-*   `created_at` (Timestamp): Kapan produk ditambahkan.
-
-### 6. 💰 `product_prices` (Harga Multi-Channel)
-**Fungsi:** Mengatur harga jual yang berbeda-beda tergantung platform (Online vs Offline) untuk menutupi biaya admin marketplace.
-*   `id` (Bigint): ID unik harga.
-*   `product_id` (Bigint): Produk apa yang diatur harganya.
-*   `channel` (Varchar): Platform penjualan (`offline`, `shopee`, `grabmart`, `tokopedia`).
-*   `price` (Decimal): Harga jual di channel tersebut (misal: Offline Rp35.000, Shopee Rp43.750).
-*   `platform_fee_pct` (Decimal): Persentase potongan admin marketplace (misal: Shopee 5%, Grabmart 20%).
-*   `updated_at` (Timestamp): Kapan harga ini terakhir diubah.
-
-### 7. 📜 `recipes` (Header Resep)
-**Fungsi:** Menyimpan data utama resep untuk menghasilkan 1 batch produk jadi.
-*   `id` (Bigint): ID unik resep.
-*   `product_id` (Bigint): Resep ini untuk membuat produk apa.
-*   `total_hpp` (Decimal): Total modal untuk membuat 1 batch resep ini.
-*   `yield_qty` (Int): Berapa banyak produk jadi yang dihasilkan dari 1 resep ini (misal: 1 resep adonan = 10 pack nugget).
-*   `effective_date` (Date): Tanggal resep ini mulai berlaku (berguna jika nanti resep berubah/harga bahan naik).
-*   `created_at` (Timestamp): Kapan resep dibuat.
-
-### 8. 🧂 `recipe_ingredients` (Detail Bahan Resep)
-**Fungsi:** Menjabarkan bahan apa saja dan berapa jumlahnya yang dibutuhkan untuk membuat resep di atas.
-*   `id` (Bigint): ID unik detail.
-*   `recipe_id` (Bigint): Mengacu ke header resep.
-*   `raw_material_id` (Bigint): Bahan baku apa yang dipakai (misal: Daging Ayam).
-*   `qty_needed` (Decimal): Berapa banyak bahan yang dibutuhkan (misal: 400).
-*   `unit` (Varchar): Satuan (harus sama dengan satuan di `raw_materials`, misal: `gram`).
-
-### 9. 🧾 `sales` (Transaksi Penjualan - Header)
-**Fungsi:** Mencatat data utama setiap kali terjadi penjualan (Struk belanja).
-*   `id` (Bigint): ID unik transaksi (Nomor Invoice).
-*   `store_id` (Bigint): Penjualan terjadi di toko mana.
-*   `sale_date` (Timestamp): Kapan transaksi terjadi.
-*   `channel` (Varchar): Dari mana penjualan berasal (`offline`, `shopee`, dll).
-*   `payment_method` (Varchar): Cara bayar (`cash`, `qris`, `transfer`).
-*   `subtotal` (Decimal): Total harga barang sebelum diskon/fee.
-*   `discount` (Decimal): Potongan harga yang diberikan ke pelanggan.
-*   `platform_fee` (Decimal): Biaya admin marketplace yang ditanggung penjual (dihitung otomatis dari `product_prices`).
-*   `grand_total` (Decimal): Uang bersih yang diterima/dibayar pelanggan.
-*   `notes` (Text): Catatan dari kasir/pembeli (misal: "Tolong pakai bubble wrap tebal").
-*   `qris_reference` (Varchar): Nomor referensi dari notifikasi QRIS (untuk audit).
-*   `qris_status` (Varchar): Status bayar (`pending`, `success`, `failed`).
-*   `qris_paid_at` (Timestamp): Kapan pembayaran QRIS dikonfirmasi lunas.
-*   `created_at` (Timestamp): Waktu data dicatat di sistem.
-
-### 10.  `sale_items` (Detail Barang dalam Transaksi)
-**Fungsi:** Mencatat barang apa saja yang dibeli dalam 1 struk (1 transaksi bisa beli 3 jenis produk berbeda).
-*   `id` (Bigint): ID unik item.
-*   `sale_id` (Bigint): Mengacu ke nomor transaksi (Header).
-*   `product_id` (Bigint): Produk apa yang dibeli.
-*   `qty` (Decimal): Berapa banyak yang dibeli (misal: 2 pack).
-*   `unit_price` (Decimal): Harga jual per unit saat transaksi itu terjadi.
-*   `hpp_snapshot` (Decimal): **SANGAT PENTING!** Ini adalah HPP (modal) produk *pada saat detik itu juga*. Ini mengunci laba/rugi agar tidak berubah meski harga bahan baku naik di masa depan.
-*   `line_total` (Decimal): `qty` dikali `unit_price` (Total harga untuk item ini).
-
-### 11. 📦 `inventory` (Stok Gudang)
-**Fungsi:** Mencatat jumlah stok fisik saat ini, baik untuk bahan baku maupun produk jadi.
-*   `id` (Bigint): ID unik stok.
-*   `store_id` (Bigint): Stok ini ada di gudang/toko mana.
-*   `product_id` (Bigint): ID produk jadi (Kosongkan jika ini stok bahan baku).
-*   `raw_material_id` (Bigint): ID bahan baku (Kosongkan jika ini stok produk jadi).
-*   `qty_on_hand` (Decimal): Jumlah fisik barang yang ada di freezer/gudang saat ini.
-*   `last_updated` (Timestamp): Kapan stok ini terakhir kali diopname/diubah.
-
-### 12. 🗑️ `waste_logs` (Catatan Kerugian / Bahan Buang)
-**Fungsi:** Mencatat bahan yang terbuang sia-sia. Ini akan langsung mengurangi Laba Bersih di laporan keuangan.
-*   `id` (Bigint): ID unik catatan.
-*   `store_id` (Bigint): Kejadian di toko mana.
-*   `raw_material_id` (Bigint): Bahan apa yang terbuang.
-*   `qty_wasted` (Decimal): Berapa banyak yang terbuang (misal: 500 gram).
-*   `reason` (Varchar): Alasan pembuangan (`expired`, `freezer_mati`, `tumpah`, `kemasan_rusak`).
-*   `loss_amount` (Decimal): Nilai uang yang hilang (Dihitung: `qty_wasted` x `cost_per_unit`).
-*   `recorded_by` (UUID): Siapa (merchant) yang mencatat kerugian ini.
-*   `recorded_at` (Timestamp): Kapan kejadian ini dicatat.
-
-### 13. 🔄 `conversions` (Konversi Bahan -> Produk Baru)
-**Fungsi:** Fitur "Penyelamat" untuk Frozen Food. Mencatat ketika bahan hampir expired diolah menjadi produk baru agar tidak jadi limbah.
-*   `id` (Bigint): ID unik konversi.
-*   `store_id` (Bigint): Kejadian di toko mana.
-*   `source_material_id` (Bigint): Bahan apa yang mau dibuang (misal: Ayam sisa 2 hari lagi expired).
-*   `target_product_id` (Bigint): Diubah jadi produk apa (misal: "Bakso Ayam Emergency").
-*   `qty_converted` (Decimal): Berapa banyak bahan yang diolah.
-*   `conversion_date` (Date): Tanggal pengolahan.
-*   `notes` (Text): Catatan (misal: "Daging sisa stok minggu lalu, diolah jadi bakso").
-*   `created_by` (UUID): Siapa yang melakukan konversi.
-*   `created_at` (Timestamp): Waktu konversi dicatat.
-
-### 14. 💾 `backups` (Riwayat Export Data)
-**Fungsi:** Mencatat riwayat ketika Owner meminta download laporan/data untuk arsip pribadi atau akuntan.
-*   `id` (Bigint): ID unik backup.
-*   `store_id` (Bigint): Data toko mana yang di-backup.
-*   `user_id` (UUID): Merchant yang meminta backup.
-*   `backup_type` (Varchar): Jenis backup (`laporan_penjualan`, `stok_gudang`, `data_transaksi`).
-*   `file_url` (Varchar): Link download file (bisa dari Supabase Storage atau link sementara).
-*   `file_size_kb` (Int): Ukuran file (untuk info user).
-*   `file_format` (Varchar): Format file (`xlsx`, `csv`, `pdf`).
-*   `date_from` & `date_to` (Date): Periode data yang di-backup (misal: 1 Maret - 31 Maret).
-*   `status` (Varchar): Status proses (`pending`, `processing`, `completed`, `failed`).
-*   `completed_at` (Timestamp): Kapan file berhasil digenerate.
-*   `created_at` (Timestamp): Kapan user menekan tombol "Backup".
+Perubahan utama pada versi ini adalah **penambahan kolom rekening bank** pada tabel `stores`, **penambahan kolom catatan & total yield** pada tabel `recipes`, serta **penghapusan tabel `waste_logs` dan `conversions`** karena tidak ada di dalam skema SQL terbaru.
 
 ---
 
-### 🎯 Kesimpulan Besar
-Dengan memahami 14 tabel ini, Anda memegang kendali penuh atas alur bisnis Frozen Food:
-1. **Beli Bahan** -> Masuk `raw_materials` & `inventory`.
-2. **Olah Bahan** -> `recipes` & `recipe_ingredients` menghitung modal (`hpp`).
-3. **Jual Produk** -> `products`, `product_prices`, `sales`, & `sale_items` mencatat pendapatan.
-4. **Cek Laba** -> `sale_items` (Pendapatan) dikurangi `waste_logs` (Kerugian).
-5. **Selamatkan Stok** -> `conversions` mengubah bahan sekarat jadi uang.
+# 🗄️ Dokumentasi Skema Database (Database Schema)
 
-Sekarang Anda sudah punya "peta harta karun" yang lengkap. Beri tahu saya jika ada bagian yang masih membingungkan, atau jika Anda sudah siap untuk mulai membuat **Model Sequelize** yang pertama! 🚀
+Dokumen ini berisi spesifikasi tabel, kolom, tipe data, serta penjelasan fungsi bisnis dari skema database sistem POS UMKM Frozen Food.
+
+---
+
+## 📄 Ringkasan Tabel
+
+- **`merchants`**: Profil Pemilik Usaha / Akun Utama
+- **`stores`**: Cabang Toko / Lokasi Fisik & Informasi Rekening
+- **`categories`**: Kategori Produk
+- **`raw_materials`**: Bahan Baku Mentah & Kemasan
+- **`products`**: Produk Jadi (Barang Siap Jual)
+- **`product_prices`**: Penyesuaian Harga Multi-Channel Penjualan
+- **`recipes`**: Header Resep Produksi Produk (1:1 dengan Produk)
+- **`recipe_ingredients`**: Detail Komposisi Bahan Baku Resep
+- **`sales`**: Header Transaksi Penjualan (Struk)
+- **`sale_items`**: Rincian Barang Penjualan
+- **`inventory`**: Stok Fisik Gudang & Toko
+- **`backups`**: Riwayat & Log Ekspor Data
+
+---
+
+## 📊 Detail Tabel & Kolom
+
+### 1. 🧑‍💼 `merchants`
+Mengelompokkan data profil pengguna/pemilik usaha yang terhubung langsung dengan Supabase Auth (1:1).
+
+- **`id`** (`uuid` - PK): ID unik dari Supabase Auth.
+- **`full_name`** (`varchar`): Nama lengkap pemilik usaha.
+- **`phone`** (`varchar`): Nomor telepon/WhatsApp.
+- **`store_name`** (`varchar`): Nama merek/bisnis utama.
+- **`store_logo_url`** (`text`): URL file logo brand utama.
+- **`created_at`** (`timestamptz`): Waktu pembuatan akun.
+
+---
+
+### 2. 🏪 `stores`
+Menyimpan data cabang, lokasi tempat usaha beroperasi, serta informasi rekening bank untuk operasional toko.
+
+- **`id`** (`int8` - PK): ID unik cabang toko.
+- **`user_id`** (`uuid` - FK): Merujuk ke `merchants.id`.
+- **`name`** (`varchar`): Nama lokasi/cabang.
+- **`type`** (`varchar`): Tipe lokasi (misal: `frozen_food`, `gudang`, `outlet`).
+- **`address`** (`text`): Alamat fisik lokasi.
+- **`logo_url`** (`varchar`): URL logo spesifik cabang.
+- **`is_active`** (`bool`): Status aktif lokasi (`true`/`false`).
+- **`created_at`** (`timestamptz`): Waktu pendaftaran lokasi.
+- **`qris_code_url`** (`text`): URL gambar/sumber kode QRIS toko.
+- **`qris_merchant_id`** (`text`): ID Merchant QRIS resmi.
+- **`default_online_markup_pct`** (`int4`): Persentase default kenaikan harga untuk penjualan online.
+- **`bank_name`** (`varchar`): Nama bank untuk rekening operasional toko.
+- **`account_number`** (`varchar`): Nomor rekening bank toko.
+- **`account_name`** (`varchar`): Nama pemilik rekening bank toko.
+
+---
+
+### 3. 🏷️ `categories`
+Pengelompokan jenis produk jadi.
+
+- **`id`** (`int8` - PK): ID unik kategori.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`name`** (`varchar`): Nama kategori (contoh: "Sosis", "Nugget").
+- **`created_at`** (`timestamptz`): Waktu pembuatan.
+
+---
+
+### 4. 🥩 `raw_materials`
+Daftar persediaan bahan baku dan kemasan mentah.
+
+- **`id`** (`int8` - PK): ID unik bahan baku.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`name`** (`varchar`): Nama bahan mentah/kemasan.
+- **`unit`** (`varchar`): Satuan ukur (`kg`, `gram`, `pcs`, dll.).
+- **`cost_per_unit`** (`numeric`): Biaya/modal per unit satuan.
+- **`is_perishable`** (`bool`): Indikator bahan mudah membusuk/rusak.
+- **`shelf_life_days`** (`int4`): Masa simpan ideal (dalam satuan hari).
+- **`created_at`** (`timestamptz`): Tanggal pendaftaran.
+
+---
+
+### 5. 🍗 `products`
+Daftar produk jadi yang dijual ke pelanggan.
+
+- **`id`** (`int8` - PK): ID unik produk.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`category_id`** (`int8` - FK): Merujuk ke `categories.id`.
+- **`name`** (`varchar`): Nama produk jadi.
+- **`sku`** (`varchar` - Unique): Stock Keeping Unit / Kode unik barang.
+- **`type`** (`varchar`): Tipe produk (default: `finished_good`).
+- **`unit`** (`varchar`): Satuan produk (`pack`, `box`, `pcs`).
+- **`base_price`** (`numeric`): Harga jual standar (offline/fisik).
+- **`hpp`** (`numeric`): Modal / Harga Pokok Penjualan per unit.
+- **`image_url`** (`varchar`): URL foto produk.
+- **`is_active`** (`bool`): Status ketersediaan/penjualan produk.
+- **`created_at`** (`timestamptz`): Waktu pembuatan data produk.
+- **`discount_pct`** (`numeric`): Persentase diskon langsung pada produk.
+- **`online_markup_pct`** (`int4`): Persentase markup spesifik online untuk produk ini.
+
+---
+
+### 6. 💰 `product_prices`
+Pengaturan harga multi-channel (Shopee, GrabMart, Tokopedia, dll.).
+
+- **`id`** (`int8` - PK): ID unik penyesuaian harga.
+- **`product_id`** (`int8` - FK): Merujuk ke `products.id`.
+- **`channel`** (`varchar`): Nama channel (`offline`, `shopee`, `grabmart`, dll.).
+- **`price`** (`numeric`): Harga jual khusus untuk channel tersebut.
+- **`platform_fee_pct`** (`numeric`): Persentase biaya potongan platform/admin.
+- **`updated_at`** (`timestamptz`): Tanggal pembaruan harga.
+
+---
+
+### 7. 📜 `recipes`
+Header formula resep untuk 1 batch pembuatan produk. *(Catatan: Relasi 1:1 dengan produk, 1 produk hanya memiliki 1 resep aktif di tabel ini).*
+
+- **`id`** (`int8` - PK): ID unik resep.
+- **`product_id`** (`int8` - FK - Unique): Merujuk ke `products.id`.
+- **`total_hpp`** (`numeric`): Akumulasi total biaya/HPP 1 batch resep.
+- **`yield_qty`** (`int4`): Jumlah porsi/pack hasil dari 1 batch resep.
+- **`total_yield`** (`int4`): Total kapasitas yield produksi (default: 1).
+- **`effective_date`** (`date`): Tanggal awal berlakunya resep.
+- **`notes`** (`text`): Catatan atau instruksi tambahan untuk resep.
+- **`created_at`** (`timestamptz`): Tanggal pembuatan resep.
+
+---
+
+### 8. 🧂 `recipe_ingredients`
+Rincian takaran bahan baku dalam suatu resep.
+
+- **`id`** (`int8` - PK): ID unik rincian resep.
+- **`recipe_id`** (`int8` - FK): Merujuk ke `recipes.id`.
+- **`raw_material_id`** (`int8` - FK): Merujuk ke `raw_materials.id`.
+- **`qty_needed`** (`numeric`): Jumlah/takaran bahan yang dibutuhkan.
+- **`unit`** (`varchar`): Satuan takaran.
+
+---
+
+### 9. 🧾 `sales`
+Header transaksi penjualan (Nota/Struk Penjualan).
+
+- **`id`** (`int8` - PK): Nomor/ID transaksi.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`sale_date`** (`timestamptz`): Waktu transaksi terjadi.
+- **`channel`** (`varchar`): Channel penjualan.
+- **`payment_method`** (`varchar`): Metode pembayaran (`cash`, `qris`, `transfer`).
+- **`subtotal`** (`numeric`): Total harga sebelum diskon/biaya platform.
+- **`discount`** (`numeric`): Total potongan diskon.
+- **`platform_fee`** (`numeric`): Potongan biaya admin marketplace.
+- **`grand_total`** (`numeric`): Nilai akhir pembayaran.
+- **`notes`** (`text`): Catatan transaksi.
+- **`qris_reference`** (`varchar`): Nomor referensi/ID transaksi QRIS.
+- **`qris_status`** (`varchar`): Status bayar (`pending`, `success`, `failed`).
+- **`qris_paid_at`** (`timestamptz`): Tanggal & waktu pelunasan QRIS.
+- **`created_at`** (`timestamptz`): Waktu pencatatan data.
+
+---
+
+### 10. 🛒 `sale_items`
+Detail produk yang dibeli dalam satu nomor transaksi.
+
+- **`id`** (`int8` - PK): ID unik baris transaksi.
+- **`sale_id`** (`int8` - FK): Merujuk ke `sales.id`.
+- **`product_id`** (`int8` - FK): Merujuk ke `products.id`.
+- **`qty`** (`numeric`): Jumlah barang dibeli.
+- **`unit_price`** (`numeric`): Harga satuan saat transaksi.
+- **`hpp_snapshot`** (`numeric`): Snapshot HPP produksi saat transaksi terjadi.
+- **`line_total`** (`numeric`): Total nilai item (`qty * unit_price`).
+
+---
+
+### 11. 📦 `inventory`
+Pencatatan stok riil fisik (produk jadi maupun bahan baku).
+
+- **`id`** (`int8` - PK): ID unik pencatatan stok.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`product_id`** (`int8` - FK - Opsional): Merujuk ke `products.id` (null jika bahan baku).
+- **`raw_material_id`** (`int8` - FK - Opsional): Merujuk ke `raw_materials.id` (null jika produk).
+- **`qty_on_hand`** (`numeric`): Jumlah stok riil di lokasi fisik.
+- **`last_updated`** (`timestamptz`): Waktu pembaruan stok terakhir.
+
+---
+
+### 12. 💾 `backups`
+Pencatatan riwayat ekspor dan pengarsipan data.
+
+- **`id`** (`int8` - PK): ID unik backup.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`user_id`** (`uuid` - FK): Merujuk ke `merchants.id`.
+- **`backup_type`** (`varchar`): Jenis data yang diekspor.
+- **`file_url`** (`varchar`): Tautan/Link unduh file backup.
+- **`file_size_kb`** (`int4`): Ukuran berkas (dalam KB).
+- **`file_format`** (`varchar`): Format berkas (`xlsx`, `csv`, `pdf`).
+- **`date_from`** (`date`): Batas awal periode data.
+- **`date_to`** (`date`): Batas akhir periode data.
+- **`status`** (`varchar`): Status ekspor (`pending`, `completed`, dll.).
+- **`completed_at`** (`timestamptz`): Tanggal & waktu penyelesaian ekspor.
+- **`created_at`** (`timestamptz`): Tanggal pembuatan permintaan ekspor.

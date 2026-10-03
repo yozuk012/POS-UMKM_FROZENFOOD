@@ -44,6 +44,38 @@ export default function RegisterPage() {
       {/* Form Section */}
       <form className="flex-1 space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
         
+        {/* Nama Lengkap (DITAMBAHKAN) */}
+        <div>
+          <label htmlFor="fullName" className={labelClass}>NAMA LENGKAP</label>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            required
+            value={formData.fullName}
+            onChange={handleChange}
+            className={inputClass}
+            placeholder="Masukkan nama lengkap"
+            autoComplete="name"
+          />
+        </div>
+
+        {/* Nomor Telepon (DITAMBAHKAN) */}
+        <div>
+          <label htmlFor="phone" className={labelClass}>NOMOR TELEPON</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            required
+            value={formData.phone}
+            onChange={handleChange}
+            className={inputClass}
+            placeholder="Contoh: 08123456789"
+            autoComplete="tel"
+          />
+        </div>
+
         {/* Nama Toko */}
         <div>
           <label htmlFor="storeName" className={labelClass}>NAMA TOKO</label>
