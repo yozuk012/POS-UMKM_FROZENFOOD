@@ -35,7 +35,10 @@ export default function useTransaction() {
     name: 'Toko Saya',
     logo_url: null,
     address: null,
-    phone: null
+    phone: null,
+    bank_name: null,
+    account_number: null,
+    account_name: null
   });
   const [receiptData, setReceiptData] = useState(null); 
 
@@ -50,7 +53,7 @@ export default function useTransaction() {
     const fetchInitialData = async () => {
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
-        .select('id, name, logo_url, address, qris_code_url, qris_merchant_id')
+        .select('id, name, logo_url, address, qris_code_url, qris_merchant_id, bank_name, account_number, account_name')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .order('id', { ascending: true })
@@ -64,6 +67,12 @@ export default function useTransaction() {
       }
 
       setStoreId(storeData.id);
+
+      const { data: merchantData } = await supabase
+        .from('merchants')
+        .select('phone')
+        .eq('id', user.id)
+        .maybeSingle();
 
       const { data: catData } = await supabase
         .from('categories')
@@ -81,7 +90,10 @@ export default function useTransaction() {
         name: storeData.name || 'Toko Saya',
         logo_url: storeData.logo_url || null,
         address: storeData.address || null,
-        phone: null
+        phone: merchantData?.phone || null,
+        bank_name: storeData.bank_name || null,
+        account_number: storeData.account_number || null,
+        account_name: storeData.account_name || null
       });
     };
 
@@ -275,7 +287,7 @@ export default function useTransaction() {
     setIsProcessing(true);
     try {
       const finalChannel = channel;
-      const amountPaid = Number(paymentData.amountPaid) || grandTotal; 
+      const amountPaid = Number(paymentData.amount_paid) || grandTotal;
       const change = Math.max(0, amountPaid - grandTotal);
 
       const { data: saleData, error: saleError } = await supabase
@@ -291,8 +303,8 @@ export default function useTransaction() {
           grand_total: grandTotal,
           notes: customerName ? `Customer: ${customerName}` : 'Umum',
           qris_reference: paymentData.reference_number || null,
-          qris_status: paymentData.qris_status || 'success',
-          qris_paid_at: paymentData.qris_paid_at || new Date().toISOString()
+          qris_status: paymentData.qris_status || null,
+          qris_paid_at: paymentData.qris_paid_at || null
         }])
         .select()
         .single();
@@ -351,6 +363,7 @@ export default function useTransaction() {
         payment_method: paymentData.payment_method
       };
 
+      setIsPaymentModalOpen(false);
       setReceiptData(newReceiptData);
       clearCart();
       fetchProducts(); 

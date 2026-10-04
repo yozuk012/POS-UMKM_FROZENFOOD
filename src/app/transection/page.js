@@ -110,6 +110,7 @@ export default function TransactionPage() {
         customerName={transaction.customerName}
         channel={transaction.channel}
         storeQrisUrl={transaction.storeQrisUrl}
+        storeInfo={transaction.storeInfo}
         onConfirmPayment={transaction.confirmPayment}
       />
 

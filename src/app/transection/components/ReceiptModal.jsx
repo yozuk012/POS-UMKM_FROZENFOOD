@@ -24,7 +24,7 @@ export default function ReceiptModal({ receiptData, onClose, onPrint }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 backdrop-blur-md p-4 print:hidden">
       <div 
         ref={receiptRef}
         className="relative w-full max-w-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-2xl overflow-hidden print:shadow-none print:max-w-none print:w-full"

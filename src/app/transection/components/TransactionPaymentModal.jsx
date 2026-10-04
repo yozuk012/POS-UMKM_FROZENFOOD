@@ -1,6 +1,20 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import {
+  FiAlertCircle,
+  FiBriefcase,
+  FiCheck,
+  FiCheckCircle,
+  FiClipboard,
+  FiCreditCard,
+  FiDollarSign,
+  FiImage,
+  FiInfo,
+  FiLoader,
+  FiSmartphone,
+  FiX
+} from 'react-icons/fi';
 
 export default function TransactionPaymentModal({ 
   isOpen, 
@@ -73,7 +87,7 @@ export default function TransactionPaymentModal({
 
     const paymentData = {
       payment_method: paymentMethod,
-      cash_received: paymentMethod === 'cash' ? cashReceived : 0,
+      amount_paid: paymentMethod === 'cash' ? cashReceived : grandTotal,
       reference_number: finalReference,
       qris_status: paymentMethod === 'qris' ? 'success' : null,
       qris_paid_at: paymentMethod === 'qris' ? new Date().toISOString() : null,
@@ -86,22 +100,20 @@ export default function TransactionPaymentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 backdrop-blur-md p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header Modal */}
         <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-600 text-white">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            💳 Pembayaran
+            <FiCreditCard aria-hidden="true" /> Pembayaran
           </h2>
           <button 
             onClick={onClose} 
             disabled={isProcessing}
             className="text-white hover:bg-blue-700 p-1.5 rounded-lg transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <FiX aria-hidden="true" className="h-5 w-5" />
           </button>
         </div>
 
@@ -134,7 +146,7 @@ export default function TransactionPaymentModal({
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
-                <span className="text-xl">💵</span>
+                <FiDollarSign aria-hidden="true" className="text-xl" />
                 <span>Tunai</span>
               </button>
               <button
@@ -145,7 +157,7 @@ export default function TransactionPaymentModal({
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
-                <span className="text-xl">📱</span>
+                <FiSmartphone aria-hidden="true" className="text-xl" />
                 <span>QRIS</span>
               </button>
               <button
@@ -156,7 +168,7 @@ export default function TransactionPaymentModal({
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
-                <span className="text-xl">🏦</span>
+                <FiBriefcase aria-hidden="true" className="text-xl" />
                 <span>Transfer</span>
               </button>
             </div>
@@ -199,7 +211,7 @@ export default function TransactionPaymentModal({
               </div>
               {change < 0 && (
                 <p className="text-xs text-red-600 font-medium flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <FiAlertCircle aria-hidden="true" className="w-4 h-4" />
                   Uang yang diterima kurang!
                 </p>
               )}
@@ -223,9 +235,7 @@ export default function TransactionPaymentModal({
                   </div>
                 ) : (
                   <div className="bg-gray-100 border-2 border-dashed border-gray-300 w-48 h-48 rounded-xl flex flex-col items-center justify-center mx-auto p-4">
-                    <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <FiImage aria-hidden="true" className="w-10 h-10 text-gray-400 mb-2" />
                     <p className="text-xs text-gray-500 font-medium text-center">
                       {imageError ? 'Gagal memuat QRIS.<br/>Periksa URL di Database.' : 'QRIS belum diatur.<br/>Hubungi admin.'}
                     </p>
@@ -252,12 +262,12 @@ export default function TransactionPaymentModal({
                 >
                   {qrisConfirmed ? (
                     <>
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      <FiCheckCircle aria-hidden="true" className="w-5 h-5" />
                       Pembayaran Diverifikasi
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <FiCheck aria-hidden="true" className="w-5 h-5" />
                       Konfirmasi Pembayaran Diterima
                     </>
                   )}
@@ -276,7 +286,7 @@ export default function TransactionPaymentModal({
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <h4 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                  <FiCreditCard aria-hidden="true" className="w-4 h-4" />
                   Informasi Rekening {storeInfo?.name || 'Toko'}
                 </h4>
                 
@@ -300,9 +310,9 @@ export default function TransactionPaymentModal({
                           title="Salin Nomor Rekening"
                         >
                           {copySuccess ? (
-                            <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            <FiCheck aria-hidden="true" className="w-4 h-4 text-green-600" />
                           ) : (
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            <FiClipboard aria-hidden="true" className="w-4 h-4" />
                           )}
                         </button>
                       )}
@@ -318,14 +328,14 @@ export default function TransactionPaymentModal({
                 
                 {!storeInfo?.bank_name && (
                   <p className="text-[10px] text-amber-600 mt-2 flex items-center gap-1 bg-amber-50 p-2 rounded border border-amber-100">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <FiAlertCircle aria-hidden="true" className="w-3 h-3" />
                     Silakan atur data rekening di menu Pengaturan Toko.
                   </p>
                 )}
 
                 {/* PERBAIKAN UX: Reminder untuk Kasir agar tidak tertipu bukti transfer palsu */}
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-                  <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <FiInfo aria-hidden="true" className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800 leading-relaxed">
                     <span className="font-bold">Penting:</span> Pastikan kasir telah menerima notifikasi dana masuk atau memeriksa mutasi rekening sebelum mengklik tombol di bawah.
                   </p>
@@ -344,15 +354,12 @@ export default function TransactionPaymentModal({
           >
             {isProcessing ? (
               <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <FiLoader aria-hidden="true" className="animate-spin h-5 w-5 text-white" />
                 Memproses Transaksi...
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <FiCheckCircle aria-hidden="true" className="w-5 h-5" />
                 Proses & Selesaikan
               </>
             )}

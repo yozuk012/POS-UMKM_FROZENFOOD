@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { useConvert } from './useConvert';
+import { useConvert } from './useConvertImages';
 
 export function useProducts() {
   const { user } = useAuth();

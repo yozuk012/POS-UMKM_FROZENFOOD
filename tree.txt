@@ -1,4 +1,6 @@
 my-pos
+├── anti-slop
+│   └── audit-001-2026-10-02.md
 ├── public
 ├── src
 │   ├── app
@@ -49,17 +51,23 @@ my-pos
 │   │   │   │   └── ReportTable.jsx
 │   │   │   └── page.js
 │   │   ├── settings
-│   │   │   ├── profile
-│   │   │   │   ├── Change-Password
-│   │   │   │   │   └── page.js
-│   │   │   │   ├── edit-profile
-│   │   │   │   │   └── page.js
-│   │   │   │   ├── Persentase-Online
-│   │   │   │   │   └── page.js
-│   │   │   │   ├── switch-account
-│   │   │   │   │   └── page.js
-│   │   │   │   └── page.js
-│   │   │   └── layout.js
+│   │   │   └── profile
+│   │   │       ├── Change-Password
+│   │   │       │   └── page.js
+│   │   │       ├── edit-profile
+│   │   │       │   ├── components
+│   │   │       │   │   ├── BasicInfoForm.jsx
+│   │   │       │   │   ├── FormFeedback.jsx
+│   │   │       │   │   ├── PaymentDetailsForm.jsx
+│   │   │       │   │   ├── PaymentToggle.jsx
+│   │   │       │   │   ├── StoreLogoSection.jsx
+│   │   │       │   │   └── SubmitButton.jsx
+│   │   │       │   └── page.js
+│   │   │       ├── Persentase-Online
+│   │   │       │   └── page.js
+│   │   │       ├── switch-account
+│   │   │       │   └── page.js
+│   │   │       └── page.js
 │   │   ├── test-connection
 │   │   │   └── page.js
 │   │   ├── transection
@@ -74,8 +82,6 @@ my-pos
 │   │   ├── layout.js
 │   │   └── page.js
 │   ├── blueprint
-│   │   ├── AGENTS.md
-│   │   ├── CLAUDE.md
 │   │   ├── DATABASE.MD
 │   │   └── RELATION.md
 │   ├── components
@@ -85,11 +91,13 @@ my-pos
 │   │   ├── useAuth.js
 │   │   ├── useBahanBaku.js
 │   │   ├── useCategories.js
-│   │   ├── useConvert.js
+│   │   ├── useConvertImages.js
+│   │   ├── useEditProfile.js
 │   │   ├── useHistory.js
 │   │   ├── useHitungHpp.js
 │   │   ├── useHppProduk.js
 │   │   ├── useProducts.js
+│   │   ├── useProfile.js
 │   │   ├── useReport.js
 │   │   └── useTransaction.js
 │   └── lib
