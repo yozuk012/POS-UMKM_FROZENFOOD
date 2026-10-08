@@ -42,7 +42,7 @@ export default function HPPProdukPage() {
       namaProduk: item.namaProduk,
     });
 
-    router.push(`/hpp/hitunghpp?${params.toString()}`);
+    router.push(`/hpp/hitung-hpp?${params.toString()}`);
   };
 
   // 6. Handler untuk Tombol Hapus
@@ -92,7 +92,7 @@ export default function HPPProdukPage() {
         {/* Floating Action Button (FAB) untuk Tambah HPP Baru */}
         {/* Menggantikan tombol "LANJUT" yang kurang logis di halaman daftar */}
         <button
-          onClick={() => router.push('/hpp/hitunghpp')}
+          onClick={() => router.push('/hpp/hitung-hpp')}
           className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all flex items-center gap-2 z-30 hover:scale-105 active:scale-95"
           title="Hitung HPP Produk Baru"
         >

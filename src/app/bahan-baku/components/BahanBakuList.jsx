@@ -2,6 +2,7 @@
 'use client';
 
 import { FiPackage, FiEdit2, FiTrash2, FiAlertCircle } from 'react-icons/fi';
+import { formatCompactRupiah, getPurchaseDisplay } from '@/lib/rawMaterialUtils';
 
 export default function BahanBakuList({ 
   bahanBaku, 
@@ -10,15 +11,6 @@ export default function BahanBakuList({
   onEdit, 
   onDelete 
 }) {
-  // Helper format rupiah
-  const formatRupiah = (angka) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(angka || 0);
-  };
-
   // State Loading
   if (isLoading) {
     return (
@@ -46,7 +38,7 @@ export default function BahanBakuList({
         <FiPackage className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-gray-700 mb-1">Belum Ada Bahan Baku</h3>
         <p className="text-sm text-gray-500">
-          Silakan klik tombol "Tambah Bahan Baku" untuk mulai mendaftarkan bahan mentah Anda.
+          Silakan klik tombol &quot;Tambah Bahan Baku&quot; untuk mulai mendaftarkan bahan mentah Anda.
         </p>
       </div>
     );
@@ -56,9 +48,10 @@ export default function BahanBakuList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {bahanBaku.map((item) => {
+        const purchaseDisplay = getPurchaseDisplay(item);
         // Tentukan status stok untuk warna UI
         const stockQty = item.qty_on_hand || 0;
-        const isLowStock = stockQty > 0 && stockQty <= 5; // Peringatan jika stok <= 5
+        const isLowStock = stockQty > 0 && purchaseDisplay.stock <= 5;
         const hasStock = stockQty > 0;
 
         return (
@@ -82,12 +75,12 @@ export default function BahanBakuList({
               <div className="space-y-1 mb-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Satuan:</span>
-                  <span className="font-semibold text-gray-700 capitalize">{item.unit}</span>
+                    <span className="font-semibold text-gray-700">{purchaseDisplay.quantity} {purchaseDisplay.unit}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Harga Modal:</span>
                   <span className="font-bold text-blue-600">
-                    {formatRupiah(item.cost_per_unit)} / {item.unit}
+                    {formatCompactRupiah(purchaseDisplay.price)} / {purchaseDisplay.quantity} {purchaseDisplay.unit}
                   </span>
                 </div>
                 {item.shelf_life_days && (
@@ -106,7 +99,7 @@ export default function BahanBakuList({
                     ? (isLowStock ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700')
                     : 'bg-gray-100 text-gray-500'
                 }`}>
-                  {hasStock ? `${stockQty} ${item.unit}` : 'Belum diinput'}
+                  {hasStock ? `${purchaseDisplay.stock.toLocaleString('id-ID')} ${purchaseDisplay.unit}` : 'Belum diinput'}
                 </span>
               </div>
             </div>

@@ -20,11 +20,12 @@ const menuItems = [
   { name: "Transaksi", href: "/transection", icon: FaCashRegister },
   { name: "Laporan", href: "/report", icon: TbReportAnalytics },
   {name: "Bahan Baku", href: "/bahan-baku", icon: FaShoppingCart},
+  {name: "Pengeluaran", href: "/pengeluaran", icon: FaCashRegister},
   { 
     name: "HPP", 
     icon: FaCalculator,
     children: [
-      { name: "Hitung HPP", href: "/hpp/hitunghpp" },
+      {name: "Hitung Hpp", href:"/hpp/hitung-hpp"},
       { name: "HPP Produk", href: "/hpp/hppproduk" }, // Sesuaikan dengan route folder Anda
     ]
   },

@@ -1,19 +1,30 @@
-// src/hooks/useBahanBaku.js
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { convertPurchaseToBase, getUnitDefinition } from '@/lib/rawMaterialUtils';
+
+const isMissingPurchaseMetadata = (error) => (
+  /purchase_(unit|quantity|price)/.test(error?.message || '') &&
+  (
+    error?.code === 'PGRST204' ||
+    error?.code === '42703' ||
+    error?.status === 400 ||
+    /schema cache|column .* not found|could not find/i.test(error?.message || '')
+  )
+);
+
+const purchaseMetadataMigrationMessage = 'Database belum siap menyimpan satuan pembelian. Jalankan RAW_MATERIAL_UNIT_MIGRATION.sql di Supabase, lalu refresh aplikasi.';
 
 /**
  * Custom hook untuk mengelola data Bahan Baku (Raw Materials).
+ * FITUR BARU: Auto Konversi ke Satuan Terkecil (Sesuai saran Dosen).
+ * UI mengirim data beli (misal: 1 kg, Rp 45.000), Hook mengonversi ke (1000 gram, Rp 45).
  */
 export default function useBahanBaku() {
   const { user } = useAuth();
   const [storeId, setStoreId] = useState(null);
   
-  // State untuk menyimpan daftar bahan baku
   const [bahanBaku, setBahanBaku] = useState([]);
-  
-  // State untuk UI feedback
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState(null);
@@ -43,7 +54,6 @@ export default function useBahanBaku() {
 
       if (fetchError) throw fetchError;
       
-      // Format data agar qty_on_hand menjadi angka biasa (bukan array)
       const formattedData = (data || []).map(item => ({
         ...item,
         qty_on_hand: item.inventory?.[0]?.qty_on_hand || 0
@@ -60,9 +70,7 @@ export default function useBahanBaku() {
 
   // Ambil store_id saat user login
   useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
+    if (!user?.id) return;
 
     const fetchStore = async () => {
       const { data } = await supabase
@@ -80,61 +88,81 @@ export default function useBahanBaku() {
     fetchStore();
   }, [user?.id]);
 
-  // Jalankan fetch saat storeId sudah didapat
   useEffect(() => {
     if (storeId) {
       fetchBahanBaku();
     }
   }, [storeId]);
 
-  // 2. CREATE: Tambah bahan baku baru + Stok Awal ke Inventory
+  // ==========================================
+  // 2. CREATE: Tambah bahan baku baru + Stok Awal
+  // ==========================================
   /**
-   * @param {Object} data - { name, unit, cost_per_unit, is_perishable, shelf_life_days }
-   * @param {number} initialStock - Jumlah stok awal yang langsung dimasukkan ke inventory
+   * @param {Object} formData - { name, satuan_beli, qty_beli, total_harga_beli, is_perishable, shelf_life_days }
+   * @param {number} initialStockInput - Stok awal dalam SATUAN BELI (misal: 1 jika beli 1 kg)
    */
-  const addBahanBaku = async (data, initialStock = 0) => {
+  const addBahanBaku = async (formData, initialStockInput = 0) => {
     setIsMutating(true);
     setError(null);
 
     try {
-      // Langkah A: Insert ke tabel raw_materials dan ambil ID yang baru dibuat
+      // LANGKAH A: Auto Konversi Data
+      const konversi = convertPurchaseToBase({
+        quantity: formData.qty_beli,
+        unit: formData.satuan_beli,
+        totalPrice: formData.total_harga_beli
+      });
+
+      // LANGKAH B: Insert ke tabel raw_materials (DATA SUDAH DALAM SATUAN TERKECIL)
+      const materialPayload = {
+          store_id: storeId,
+          name: formData.name,
+          unit: konversi.baseUnit,
+          cost_per_unit: konversi.costPerBaseUnit,
+          purchase_unit: konversi.purchaseUnit,
+          purchase_quantity: konversi.purchaseQuantity,
+          purchase_price: konversi.purchasePrice,
+          is_perishable: formData.is_perishable || false,
+          shelf_life_days: formData.shelf_life_days || null,
+          created_at: new Date().toISOString()
+      };
+
       const { data: newMaterial, error: insertError } = await supabase
         .from('raw_materials')
-        .insert({
-          ...data,
-          store_id: storeId,
-          created_at: new Date().toISOString()
-        })
-        .select('id') // PENTING: Kita butuh ID ini untuk dimasukkan ke inventory
+        .insert(materialPayload)
+        .select('id')
         .single();
+
+      if (isMissingPurchaseMetadata(insertError)) {
+        throw new Error(purchaseMetadataMigrationMessage);
+      }
 
       if (insertError) throw insertError;
 
-      // Langkah B: Jika ada stok awal, langsung masukkan ke tabel inventory
-      if (initialStock > 0) {
+      // LANGKAH C: Masukkan stok awal ke inventory (Harus dikonversi juga ke satuan terkecil!)
+      if (initialStockInput > 0) {
+        const stockTersimpan = Math.round(initialStockInput * konversi.factor);
+
         const { error: inventoryError } = await supabase
           .from('inventory')
           .insert({
             store_id: storeId,
-            raw_material_id: newMaterial.id, // Hubungkan ke bahan baku yang baru dibuat
-            product_id: null,                // Wajib null karena ini bahan baku, bukan produk jadi
-            qty_on_hand: initialStock
+            raw_material_id: newMaterial.id,
+            product_id: null,
+            qty_on_hand: stockTersimpan,
+            last_updated: new Date().toISOString()
           });
 
         if (inventoryError) {
           console.error('Gagal membuat stok awal di inventory:', inventoryError);
-          // Kita tetap lanjut, agar bahan baku tetap tersimpan meski gagal catat stok
         }
       }
 
-      // Refresh data setelah berhasil insert
       await fetchBahanBaku();
       
       return { 
         success: true, 
-        message: initialStock > 0 
-          ? `Bahan baku berhasil ditambahkan dengan stok awal ${initialStock} ${data.unit}!` 
-          : 'Bahan baku berhasil ditambahkan!' 
+        message: 'Bahan baku berhasil ditambahkan.'
       };
     } catch (err) {
       console.error('Gagal menambah bahan baku:', err);
@@ -144,62 +172,81 @@ export default function useBahanBaku() {
     }
   };
 
+  // ==========================================
   // 3. UPDATE: Edit bahan baku yang sudah ada
+  // ==========================================
   /**
-   * @param {number} id - ID bahan baku yang akan diupdate
-  * @param {Object} data - Data master yang ingin diupdate
-  * @param {number|null} stockQuantity - Stok terbaru, jika ikut diubah
+   * @param {number} id - ID bahan baku
+   * @param {Object} data - Data yang diupdate. Jika update harga, gunakan format { satuan_beli, qty_beli, total_harga_beli } agar terkonversi otomatis.
+   * @param {number|null} stockQuantityInput - Stok terbaru dalam SATUAN BELI asli.
    */
-  const updateBahanBaku = async (id, data, stockQuantity = null) => {
+  const updateBahanBaku = async (id, data, stockQuantityInput = null) => {
     setIsMutating(true);
     setError(null);
 
     try {
+      let payloadToUpdate = { ...data };
+
+      // Jika user mengupdate data harga/satuan, lakukan konversi ulang
+      if (data.satuan_beli && data.qty_beli && data.total_harga_beli) {
+        const konversi = convertPurchaseToBase({
+          quantity: data.qty_beli,
+          unit: data.satuan_beli,
+          totalPrice: data.total_harga_beli
+        });
+        payloadToUpdate = {
+          unit: konversi.baseUnit,
+          cost_per_unit: konversi.costPerBaseUnit,
+          purchase_unit: konversi.purchaseUnit,
+          purchase_quantity: konversi.purchaseQuantity,
+          purchase_price: konversi.purchasePrice,
+          name: data.name || payloadToUpdate.name,
+          is_perishable: data.is_perishable,
+          shelf_life_days: data.shelf_life_days
+        };
+      }
+
       const { error: updateError } = await supabase
         .from('raw_materials')
-        .update(data)
+        .update(payloadToUpdate)
         .eq('id', id)
-        .eq('store_id', storeId); // Keamanan tambahan: hanya update milik toko sendiri
+        .eq('store_id', storeId);
+
+      if (isMissingPurchaseMetadata(updateError)) {
+        throw new Error(purchaseMetadataMigrationMessage);
+      }
 
       if (updateError) throw updateError;
 
-      if (stockQuantity !== null) {
-        const { data: existingInventory, error: inventoryFetchError } = await supabase
+      // Update stok di inventory jika ada perubahan
+      if (stockQuantityInput !== null) {
+        const { data: existingInventory } = await supabase
           .from('inventory')
           .select('id')
           .eq('raw_material_id', id)
           .eq('store_id', storeId)
+          .is('product_id', null)
           .maybeSingle();
-
-        if (inventoryFetchError) throw inventoryFetchError;
 
         const inventoryPayload = {
           store_id: storeId,
           raw_material_id: id,
           product_id: null,
-          qty_on_hand: stockQuantity,
+          qty_on_hand: Math.round(
+            Math.max(0, Number(stockQuantityInput) || 0) *
+            getUnitDefinition(data.satuan_beli).factor
+          ),
           last_updated: new Date().toISOString()
         };
 
         if (existingInventory) {
-          const { error: inventoryUpdateError } = await supabase
-            .from('inventory')
-            .update(inventoryPayload)
-            .eq('id', existingInventory.id);
-
-          if (inventoryUpdateError) throw inventoryUpdateError;
+          await supabase.from('inventory').update(inventoryPayload).eq('id', existingInventory.id);
         } else {
-          const { error: inventoryInsertError } = await supabase
-            .from('inventory')
-            .insert(inventoryPayload);
-
-          if (inventoryInsertError) throw inventoryInsertError;
+          await supabase.from('inventory').insert(inventoryPayload);
         }
       }
 
-      // Refresh data
       await fetchBahanBaku();
-      
       return { success: true, message: 'Bahan baku berhasil diperbarui!' };
     } catch (err) {
       console.error('Gagal memperbarui bahan baku:', err);
@@ -209,16 +256,14 @@ export default function useBahanBaku() {
     }
   };
 
+  // ==========================================
   // 4. DELETE: Hapus bahan baku
-  /**
-   * @param {number} id - ID bahan baku yang akan dihapus
-   */
+  // ==========================================
   const deleteBahanBaku = async (id) => {
     setIsMutating(true);
     setError(null);
 
     try {
-      // Hapus dari raw_materials
       const { error: deleteError } = await supabase
         .from('raw_materials')
         .delete()
@@ -227,16 +272,13 @@ export default function useBahanBaku() {
 
       if (deleteError) throw deleteError;
 
-      // OPSIONAL: Hapus juga dari inventory agar tidak ada data sampah (orphan data)
       await supabase
         .from('inventory')
         .delete()
         .eq('raw_material_id', id)
         .eq('store_id', storeId);
 
-      // Refresh data
       await fetchBahanBaku();
-      
       return { success: true, message: 'Bahan baku berhasil dihapus!' };
     } catch (err) {
       console.error('Gagal menghapus bahan baku:', err);
@@ -246,7 +288,6 @@ export default function useBahanBaku() {
     }
   };
 
-  // Return semua state dan fungsi agar bisa digunakan di komponen UI
   return {
     bahanBaku,
     isLoading,

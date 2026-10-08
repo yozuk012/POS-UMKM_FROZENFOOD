@@ -1,4 +1,3 @@
-// src/hooks/useAuth.js
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -17,7 +16,7 @@ export function useAuth() {
   const [error, setError] = useState(null);
 
   // ==========================================
-  // 2. CORE UTILITY (DIPINDAH KE ATAS AGAR BISA DIAKSES OLENG FUNGSI LAIN)
+  // 2. CORE UTILITY (DIPINDAH KE ATAS AGAR BISA DIAKSES OLEH FUNGSI LAIN)
   // ==========================================
   const fetchMerchant = useCallback(async (userId) => {
     try {
@@ -26,7 +25,7 @@ export function useAuth() {
       setMerchant(data);
       return data;
     } catch (err) {
-      console.error('Fetch merchant error:', err);
+      console.warn('Fetch merchant warning:', err.message);
       return null;
     }
   }, []);
@@ -114,7 +113,7 @@ export function useAuth() {
       router.push('/auth/login'); 
 
     } catch (err) {
-      console.error('Register error:', err);
+      console.warn('Register warning:', err.message);
       setRegError(err.message);
     } finally {
       setIsRegistering(false);
@@ -123,7 +122,7 @@ export function useAuth() {
 
 
   // ==========================================
-  // 4. LOGIN FORM STATE & LOGIC
+  // 4. LOGIN FORM STATE & LOGIC (DIPERBAIKI)
   // ==========================================
   const [loginFormData, setLoginFormData] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState(null);
@@ -149,16 +148,29 @@ export function useAuth() {
         password: loginFormData.password,
       });
 
-      if (error) throw error;
+      // Tangani error spesifik dari Supabase agar pesan lebih ramah
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Email atau password yang Anda masukkan salah.');
+        }
+        throw new Error(error.message);
+      }
       
       if (data.user) {
         setUser(data.user);
-        await fetchMerchant(data.user.id); // Sekarang aman karena fetchMerchant sudah dideklarasikan di atas
+        await fetchMerchant(data.user.id);
         router.push('/'); // Redirect ke dashboard setelah login berhasil
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setLoginError('Email atau password yang Anda masukkan salah.');
+      // PERBAIKAN: Gunakan console.warn, bukan console.error, agar tidak muncul merah di console
+      console.warn('Login gagal:', err.message); 
+      
+      // Set state error agar bisa ditampilkan di UI form
+      setLoginError(err.message);
+      
+      // Munculkan popup alert agar user langsung tahu (sesuai permintaan)
+      alert(err.message);
+      
     } finally {
       setIsLoggingIn(false);
     }
@@ -182,7 +194,7 @@ export function useAuth() {
           setMerchant(null);
         }
       } catch (err) {
-        console.error('Session check error:', err);
+        console.warn('Session check warning:', err.message);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -217,7 +229,7 @@ export function useAuth() {
       if (error) throw error;
       router.push('/auth/login');
     } catch (err) {
-      console.error('Logout error:', err);
+      console.warn('Logout warning:', err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -248,5 +260,3 @@ export function useAuth() {
     }
   };
 }
-
-export default useAuth;

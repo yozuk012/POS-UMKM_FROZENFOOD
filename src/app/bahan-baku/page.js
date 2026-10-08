@@ -1,10 +1,12 @@
-// src/app/bahan-baku/page.js
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/PageLayout';
+
+// PERBAIKAN: Pastikan path import sesuai dengan nama file hook Anda
 import useBahanBaku from '@/hooks/useBahanBaku';
+
 import BahanBakuList from './components/BahanBakuList';
 import BahanBakuFormModal from './components/BahanBakuFormModal';
 import { FiPlus, FiSearch, FiArrowLeft } from 'react-icons/fi';
@@ -28,7 +30,7 @@ export default function BahanBakuPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null); 
 
-  // 3. Filter Data berdasarkan Search
+  // 3. Filter Data berdasarkan Search (Case-insensitive)
   const filteredBahanBaku = bahanBaku.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -41,9 +43,15 @@ export default function BahanBakuPage() {
 
   // 5. Handler untuk Tombol Hapus
   const handleDelete = async (id) => {
+    // Konfirmasi ganda untuk mencegah hapus tidak sengaja
+    const isConfirmed = window.confirm('Yakin ingin menghapus bahan baku ini? Data stok di inventory juga akan ikut terhapus.');
+    if (!isConfirmed) return;
+
     const result = await deleteBahanBaku(id);
-    if (!result.success) {
+    if (result.success) {
       alert(result.message);
+    } else {
+      alert(`Gagal menghapus: ${result.message}`);
     }
   };
 
@@ -53,23 +61,21 @@ export default function BahanBakuPage() {
     setIsModalOpen(true);
   };
 
-  // 7. Handler Submit Form dari Modal (DIPERBAIKI)
-  const handleSubmitForm = async (payload) => {
+  // 7. Handler Submit Form dari Modal
+  const handleSubmitForm = async (payload, initialStockInput = 0) => {
     let result;
     
     if (editingItem) {
       // --- MODE EDIT ---
-      const { initialStock, ...updateData } = payload;
-      result = await updateBahanBaku(editingItem.id, updateData, initialStock);
+      // Pisahkan initialStock (yang di sini berfungsi sebagai update stok) dari data master
+      result = await updateBahanBaku(editingItem.id, payload, parseFloat(initialStockInput));
     } else {
       // --- MODE TAMBAH ---
       // Pisahkan initialStock agar bisa dikirim sebagai parameter ke-2 ke hook
-      const { initialStock, ...materialData } = payload;
-      result = await addBahanBaku(materialData, initialStock);
+      result = await addBahanBaku(payload, parseFloat(initialStockInput));
     }
 
     if (result.success) {
-      // Opsional: Gunakan toast notification jika ada, jika tidak alert biasa sudah cukup
       alert(result.message);
       setIsModalOpen(false); // Tutup modal jika sukses
       setEditingItem(null);
@@ -87,12 +93,12 @@ export default function BahanBakuPage() {
           <div>
             <button 
               onClick={() => router.back()} 
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-2 text-sm transition-colors"
+              className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2 text-sm font-medium transition-colors"
             >
               <FiArrowLeft className="w-4 h-4" /> Kembali
             </button>
             <h1 className="text-2xl font-bold text-gray-800">Manajemen Bahan Baku</h1>
-            <p className="text-sm text-gray-500">Kelola stok bahan mentah dan kemasan Anda</p>
+            <p className="text-sm text-gray-500">Kelola stok bahan mentah, kemasan, dan harga modal Anda</p>
           </div>
 
           <button
@@ -112,7 +118,7 @@ export default function BahanBakuPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama bahan baku..."
+            placeholder="Cari nama bahan baku (contoh: Tepung, Gula)..."
             className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm transition-all"
           />
         </div>

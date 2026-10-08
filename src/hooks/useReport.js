@@ -1,27 +1,66 @@
-// src/hooks/useReport.js
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from './useAuth';
 
 export default function useReport() {
+  const { user } = useAuth();
   const [reports, setReports] = useState([]);
+  const [operationalExpenses, setOperationalExpenses] = useState([]);
   const [summary, setSummary] = useState({
     totalSales: 0,
     totalHpp: 0,
     totalOps: 0,
-    grossProfit: 0,
-    netProfit: 0,
+    grossProfit: 0,       // Laba Kotor (Penjualan - HPP)
+    netProfit: 0,         // Laba Bersih (Laba Kotor - Operasional)
+    netProfitMargin: 0,   // Persentase Laba Bersih
     totalTransactions: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchReports = useCallback(async () => {
+  // Helper: Mendapatkan rentang tanggal bulan ini (Format YYYY-MM-DD)
+  const getCurrentMonthRange = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString('sv-SE');
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toLocaleDateString('sv-SE');
+    return { firstDay, lastDay };
+  };
+
+  const fetchReports = useCallback(async (startDate = null, endDate = null) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Mengambil data sales beserta detail sale_items-nya
-      const { data, error: fetchError } = await supabase
+      if (!user?.id) {
+        setReports([]);
+        setOperationalExpenses([]);
+        return;
+      }
+
+      // 1. Ambil Store ID
+      const { data: store, error: storeError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('id', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (storeError) throw storeError;
+      if (!store) {
+        setReports([]);
+        setOperationalExpenses([]);
+        return;
+      }
+
+      // Tentukan rentang tanggal (default: bulan ini)
+      const { firstDay, lastDay } = getCurrentMonthRange();
+      const queryStart = startDate || firstDay;
+      const queryEnd = endDate || lastDay;
+
+      // 2. Ambil Data Penjualan & Detail Item (Difilter berdasarkan tanggal)
+      let salesQuery = supabase
         .from('sales')
         .select(`
           id,
@@ -39,64 +78,58 @@ export default function useReport() {
             line_total
           )
         `)
+        .eq('store_id', store.id)
+        .gte('sale_date', queryStart)
+        .lte('sale_date', queryEnd)
         .order('sale_date', { ascending: false });
 
-      if (fetchError) {
-        console.error('Fetch error:', fetchError);
-        throw fetchError;
-      }
+      const { data: salesData, error: salesError } = await salesQuery;
+      if (salesError) throw salesError;
 
-      console.log('Raw data from Supabase:', data);
+      // 3. Ambil Data Pengeluaran Operasional (Difilter berdasarkan tanggal)
+      let expensesQuery = supabase
+        .from('operational_expenses')
+        .select('id, expense_date, category, description, amount')
+        .eq('store_id', store.id)
+        .gte('expense_date', queryStart)
+        .lte('expense_date', queryEnd)
+        .order('expense_date', { ascending: false });
 
-      // Transformasi data sesuai kebutuhan UI
-      const transformedData = (data || []).map((sale) => {
-        // 1. Logika Nama Customer
+      const { data: expenses, error: expensesError } = await expensesQuery;
+      if (expensesError) throw expensesError;
+      
+      setOperationalExpenses(expenses || []);
+
+      // 4. Transformasi Data Penjualan per Transaksi
+      const transformedData = (salesData || []).map((sale) => {
         const customerName = sale.notes && sale.notes.trim() !== '' 
           ? sale.notes 
           : 'Pelanggan Umum';
 
-        // 2. Logika Status Pembayaran
-        let statusText = sale.payment_method.charAt(0).toUpperCase() + sale.payment_method.slice(1);
-        if (sale.payment_method === 'qris') {
-          const qrisStatusMap = {
-            success: 'Selesai',
-            failed: 'Gagal',
-            pending: 'Pending'
-          };
+        const paymentMethod = sale.payment_method || 'unknown';
+        let statusText = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+        
+        if (paymentMethod === 'qris') {
+          const qrisStatusMap = { success: 'Selesai', failed: 'Gagal', pending: 'Pending' };
           statusText += ` (${qrisStatusMap[sale.qris_status] || 'Pending'})`;
         } else {
           statusText += ' (Selesai)';
         }
 
-        // 3. Kalkulasi Item & Total Penjualan
         const saleItems = sale.sale_items || [];
-        const totalProducts = saleItems.reduce((sum, item) => {
-          const qty = parseFloat(item.qty) || 0;
-          return sum + qty;
-        }, 0);
-        
+        const totalProducts = saleItems.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
         const totalSales = parseFloat(sale.grand_total) || 0;
         
-        // 4. PERBAIKAN: Kalkulasi HPP Transaksi secara AKURAT
-        // Debug log untuk melihat data
-        console.log(`Sale ID ${sale.id} items:`, saleItems);
-        
+        // ✅ INI KUNCINYA: HPP dihitung berdasarkan snapshot saat transaksi
         const totalHpp = saleItems.reduce((sum, item) => {
           const qty = parseFloat(item.qty) || 0;
           const hpp = parseFloat(item.hpp_snapshot) || 0;
-          const itemHpp = qty * hpp;
-          console.log(`  - Qty: ${qty}, HPP: ${hpp}, Total: ${itemHpp}`);
-          return sum + itemHpp;
+          return sum + (qty * hpp);
         }, 0);
 
-        console.log(`Total HPP for Sale ${sale.id}:`, totalHpp);
-
-        // Biaya operasional
-        const totalOps = 0; 
-
-        // 5. Kalkulasi Laba
+        // Laba Kotor = Penjualan - HPP (Profit murni dari barang yang LARIS)
         const grossProfit = totalSales - totalHpp;
-        const netProfit = grossProfit - totalOps;
+        const profitMargin = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
 
         return {
           orderId: sale.id,
@@ -107,32 +140,32 @@ export default function useReport() {
           totalProducts,
           totalSales,
           totalHpp,
-          totalOps,
           grossProfit,
-          netProfit,
+          profitMargin,
         };
       });
 
-      console.log('Transformed reports:', transformedData);
       setReports(transformedData);
 
-      // Kalkulasi Summary Keseluruhan
+      // 5. Kalkulasi Summary Keseluruhan Periode (Bulan Ini)
       const totalSalesSum = transformedData.reduce((sum, r) => sum + (r.totalSales || 0), 0);
       const totalHppSum = transformedData.reduce((sum, r) => sum + (r.totalHpp || 0), 0);
-      const totalOpsSum = transformedData.reduce((sum, r) => sum + (r.totalOps || 0), 0);
-
-      console.log('Summary:', {
-        totalSales: totalSalesSum,
-        totalHpp: totalHppSum,
-        grossProfit: totalSalesSum - totalHppSum,
-      });
+      const grossProfitSum = totalSalesSum - totalHppSum;
+      
+      // Total operasional adalah total pengeluaran periode ini
+      const totalOpsSum = (expenses || []).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+      
+      // Laba Bersih = Laba Kotor - Pengeluaran Operasional
+      const netProfit = grossProfitSum - totalOpsSum;
+      const netProfitMargin = totalSalesSum > 0 ? (netProfit / totalSalesSum) * 100 : 0;
 
       setSummary({
         totalSales: totalSalesSum,
         totalHpp: totalHppSum,
         totalOps: totalOpsSum,
-        grossProfit: totalSalesSum - totalHppSum,
-        netProfit: totalSalesSum - totalHppSum - totalOpsSum,
+        grossProfit: grossProfitSum,
+        netProfit: netProfit,
+        netProfitMargin: netProfitMargin,
         totalTransactions: transformedData.length,
       });
 
@@ -142,14 +175,18 @@ export default function useReport() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
+  // Auto-fetch saat user login
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+    if (user?.id) {
+      fetchReports();
+    }
+  }, [user, fetchReports]);
 
   return {
     reports,
+    operationalExpenses,
     summary,
     loading,
     error,

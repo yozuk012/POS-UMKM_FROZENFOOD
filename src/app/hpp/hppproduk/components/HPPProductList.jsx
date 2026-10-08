@@ -38,7 +38,7 @@ export default function HPPProductList({
         <FiPackage className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p className="text-gray-500 text-lg font-semibold">Tidak ada produk HPP</p>
         <p className="text-gray-400 text-sm mt-1">
-          Mulai hitung HPP di menu "Hitung HPP" untuk menambahkan produk ke sini.
+          Mulai hitung HPP di menu &quot;Hitung HPP&quot; untuk menambahkan produk ke sini.
         </p>
       </div>
     );
@@ -76,6 +76,9 @@ export default function HPPProductList({
                   {formatRupiah(item.hpp)} <span className="text-gray-500 font-normal text-xs">/ {item.unit}</span>
                 </p>
               </div>
+              <p className="text-sm font-bold text-green-700 mt-1">
+                Harga rekomendasi: {formatRupiah(item.base_price)} <span className="text-gray-500 font-normal text-xs">/ {item.unit}</span>
+              </p>
             </div>
 
             {/* Action Buttons */}
@@ -91,7 +94,7 @@ export default function HPPProductList({
               
               <button
                 onClick={() => {
-                  if (window.confirm(`Yakin ingin menghapus "${item.namaProduk}"? Data resep terkait juga akan terhapus.`)) {
+                    if (window.confirm(`Yakin ingin menghapus '${item.namaProduk}'? Data resep terkait juga akan terhapus.`)) {
                     onDelete(item.id);
                   }
                 }}

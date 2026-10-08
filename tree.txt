@@ -24,11 +24,10 @@ my-pos
 │   │   │   │   └── HistoryList.jsx
 │   │   │   └── page.js
 │   │   ├── hpp
-│   │   │   ├── hitunghpp
+│   │   │   ├── hitung-hpp
 │   │   │   │   ├── components
 │   │   │   │   │   ├── Step1BahanBaku.jsx
-│   │   │   │   │   ├── Step2Operasional.jsx
-│   │   │   │   │   ├── Step3Hasil.jsx
+│   │   │   │   │   ├── Step2Hasil.jsx
 │   │   │   │   │   └── StepIndicator.jsx
 │   │   │   │   └── page.js
 │   │   │   └── hppproduk
@@ -36,6 +35,12 @@ my-pos
 │   │   │       │   ├── HPPHeader.jsx
 │   │   │       │   └── HPPProductList.jsx
 │   │   │       └── page.js
+│   │   ├── pengeluaran
+│   │   │   ├── components
+│   │   │   │   ├── ExpenseForm.jsx
+│   │   │   │   ├── ExpenseList.jsx
+│   │   │   │   └── ExpenseSummary.jsx
+│   │   │   └── page.js
 │   │   ├── product
 │   │   │   ├── components
 │   │   │   │   ├── ProductFilters.jsx
@@ -83,6 +88,7 @@ my-pos
 │   │   └── page.js
 │   ├── blueprint
 │   │   ├── DATABASE.MD
+│   │   ├── RAW_MATERIAL_UNIT_MIGRATION.sql
 │   │   └── RELATION.md
 │   ├── components
 │   │   ├── PageLayout.js
@@ -91,17 +97,21 @@ my-pos
 │   │   ├── useAuth.js
 │   │   ├── useBahanBaku.js
 │   │   ├── useCategories.js
+│   │   ├── useChangePassword.js
 │   │   ├── useConvertImages.js
 │   │   ├── useEditProfile.js
 │   │   ├── useHistory.js
-│   │   ├── useHitungHpp.js
+│   │   ├── useHppBahanBaku.js
+│   │   ├── useHppOperasional.js
 │   │   ├── useHppProduk.js
+│   │   ├── useOnlinePercentage.js
 │   │   ├── useProducts.js
 │   │   ├── useProfile.js
 │   │   ├── useReport.js
 │   │   └── useTransaction.js
 │   └── lib
 │       ├── productUtils.js
+│       ├── rawMaterialUtils.js
 │       └── supabase.js
 ├── .env.local
 ├── .env.production

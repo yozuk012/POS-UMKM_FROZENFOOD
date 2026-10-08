@@ -3,17 +3,23 @@
 import { useState } from 'react';
 import { FiArrowLeft, FiUser, FiLock, FiEye, FiEyeOff, FiX, FiMail } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth'; // Pastikan path ini sesuai dengan project Anda
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { user } = useAuth(); // Ambil data user yang sedang login
+
   const [formData, setFormData] = useState({
     oldPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+  
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,90 +40,112 @@ export default function ChangePasswordPage() {
     setSuccess('');
   };
 
+  // ==========================================
+  // LOGIKA CHANGE PASSWORD (REAL SUPABASE)
+  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Validation
+    // 1. Validasi Frontend
     if (formData.newPassword !== formData.confirmPassword) {
       setError('Password baru dan konfirmasi password tidak cocok.');
       return;
     }
-
     if (formData.newPassword.length < 6) {
       setError('Password baru minimal 6 karakter.');
       return;
     }
-
     if (formData.oldPassword === formData.newPassword) {
       setError('Password baru tidak boleh sama dengan password lama.');
+      return;
+    }
+    if (!user?.email) {
+      setError('Sesi tidak ditemukan. Silakan login ulang.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // TODO: Add your API call here to change password
-      console.log('Changing password:', {
-        oldPassword: formData.oldPassword,
-        newPassword: formData.newPassword,
+      // 2. Verifikasi Password Lama (Coba login ulang)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: formData.oldPassword,
       });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (signInError) {
+        throw new Error('Password lama yang Anda masukkan salah.');
+      }
 
-      setSuccess('Password berhasil diubah!');
+      // 3. Update Password Baru
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.newPassword,
+      });
+
+      if (updateError) {
+        throw new Error('Gagal mengubah password: ' + updateError.message);
+      }
+
+      // 4. Sukses
+      setSuccess('Password berhasil diubah! Mengalihkan...');
       setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
 
-      // Redirect after success
+      // Redirect setelah 1.5 detik
       setTimeout(() => {
         router.push('/settings/profile');
       }, 1500);
+
     } catch (err) {
       console.error('Error changing password:', err);
-      setError('Gagal mengubah password. Silakan coba lagi.');
+      setError(err.message || 'Gagal mengubah password. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ==========================================
+  // LOGIKA FORGOT PASSWORD (REAL SUPABASE)
+  // ==========================================
   const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setForgotLoading(true);
 
-    // Validation
     if (!forgotEmail) {
       setError('Email harus diisi.');
-      setForgotLoading(false);
       return;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
       setError('Format email tidak valid.');
-      setForgotLoading(false);
       return;
     }
 
-    try {
-      // TODO: Add your API call here to send reset password email
-      console.log('Sending reset password to:', forgotEmail);
+    setForgotLoading(true);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Kirim email reset password via Supabase
+      // Ganti URL redirectTo sesuai dengan halaman reset password Anda (jika ada)
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`, 
+      });
+
+      if (error) {
+        throw new Error('Gagal mengirim email: ' + error.message);
+      }
 
       setForgotSuccess(true);
       
-      // Close modal after 2 seconds
+      // Tutup modal setelah 2.5 detik
       setTimeout(() => {
         setShowForgotPasswordModal(false);
         setForgotSuccess(false);
         setForgotEmail('');
-      }, 2000);
+      }, 2500);
+
     } catch (err) {
       console.error('Error sending reset password:', err);
-      setError('Gagal mengirim email reset password. Silakan coba lagi.');
+      setError(err.message || 'Gagal mengirim email reset password.');
     } finally {
       setForgotLoading(false);
     }
@@ -127,6 +155,8 @@ export default function ChangePasswordPage() {
     setShowForgotPasswordModal(true);
     setError('');
     setForgotSuccess(false);
+    // Opsional: auto-fill email user yang sedang login
+    if (user?.email) setForgotEmail(user.email);
   };
 
   const closeModal = () => {

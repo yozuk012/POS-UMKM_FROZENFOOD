@@ -1,8 +1,8 @@
-// src/app/bahan-baku/components/BahanBakuFormModal.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiInfo } from 'react-icons/fi';
+import { getPurchaseEditValues } from '@/lib/rawMaterialUtils';
 
 export default function BahanBakuFormModal({ 
   isOpen, 
@@ -11,38 +11,41 @@ export default function BahanBakuFormModal({
   onSubmit, 
   isSubmitting 
 }) {
-  // State Form (Ditambahkan initialStock)
+  // State Form: Disesuaikan dengan logika Auto Konversi
   const [formData, setFormData] = useState({
     name: '',
-    unit: 'pcs',
-    cost_per_unit: '',
+    qty_beli: '1',          // Jumlah yang dibeli (misal: 1)
+    satuan_beli: 'kg',      // Satuan saat membeli (dropdown)
+    total_harga_beli: '',   // Total harga yang dibayar (misal: 45000)
+    initialStock: '0',      // Stok awal (dalam satuan beli yang sama, misal: 1)
     is_perishable: false,
-    shelf_life_days: '',
-    initialStock: '' // Baru: Untuk stok awal saat pembuatan
+    shelf_life_days: ''
   });
 
   // Reset atau isi form saat modal dibuka / item berubah
   useEffect(() => {
     if (isOpen) {
       if (editingItem) {
-        // Mode Edit: Isi dengan data yang ada (Stok awal tidak diedit di sini)
+        const purchaseValues = getPurchaseEditValues(editingItem);
         setFormData({
           name: editingItem.name || '',
-          unit: editingItem.unit || 'pcs',
-          cost_per_unit: editingItem.cost_per_unit || '',
+          qty_beli: String(purchaseValues.quantity),
+          satuan_beli: purchaseValues.unit || 'kg',
+          total_harga_beli: String(purchaseValues.price || ''),
+          initialStock: String(purchaseValues.stock),
           is_perishable: editingItem.is_perishable || false,
-          shelf_life_days: editingItem.shelf_life_days || '',
-          initialStock: String(editingItem.qty_on_hand ?? 0)
+          shelf_life_days: editingItem.shelf_life_days || ''
         });
       } else {
-        // Mode Tambah: Reset form
+        // Mode Tambah: Reset form ke default belanja
         setFormData({
           name: '',
-          unit: 'pcs',
-          cost_per_unit: '',
+          qty_beli: '1',
+          satuan_beli: 'kg',
+          total_harga_beli: '',
+          initialStock: '0',
           is_perishable: false,
-          shelf_life_days: '',
-          initialStock: '0'
+          shelf_life_days: ''
         });
       }
     }
@@ -62,22 +65,25 @@ export default function BahanBakuFormModal({
     e.preventDefault();
 
     // Validasi sederhana
-    if (!formData.name.trim() || !formData.unit.trim() || !formData.cost_per_unit) {
-      alert('Mohon lengkapi Nama, Satuan, dan Harga Modal!');
+    if (!formData.name.trim() || !formData.qty_beli || !formData.satuan_beli || !formData.total_harga_beli) {
+      alert('Mohon lengkapi Nama, Jumlah Beli, Satuan, dan Total Harga Beli!');
       return;
     }
 
-    // Siapkan payload (konversi tipe data agar sesuai database dan hook)
+    // Siapkan payload PERSIS seperti yang diharapkan oleh useBahanBaku.js
     const payload = {
       name: formData.name.trim(),
-      unit: formData.unit.trim().toLowerCase(),
-      cost_per_unit: parseFloat(formData.cost_per_unit),
+      satuan_beli: formData.satuan_beli.toLowerCase(),
+      qty_beli: parseFloat(formData.qty_beli),
+      total_harga_beli: parseFloat(formData.total_harga_beli),
       is_perishable: formData.is_perishable,
-      shelf_life_days: formData.shelf_life_days ? parseInt(formData.shelf_life_days) : null,
-      initialStock: parseFloat(formData.initialStock) || 0
+      shelf_life_days: formData.shelf_life_days ? parseInt(formData.shelf_life_days) : null
     };
 
-    onSubmit(payload);
+    const initialStockInput = parseFloat(formData.initialStock) || 0;
+
+    // Kirim ke parent (yang akan memanggil hook useBahanBaku)
+    onSubmit(payload, initialStockInput);
   };
 
   // Jika modal tidak terbuka, jangan render apa-apa
@@ -114,49 +120,76 @@ export default function BahanBakuFormModal({
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Contoh: Semangka, Gula Pasir, Cup Plastik"
+              placeholder="Contoh: Daging Ayam Giling, Tepung Tapioka"
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Satuan */}
-            <div>
+          {/* Baris 1: Jumlah Beli & Satuan Beli */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-1">
               <label className="block text-gray-700 text-sm font-semibold mb-1">
-                Satuan <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="unit"
-                value={formData.unit}
-                onChange={handleChange}
-                placeholder="pcs, kg, liter"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            {/* Harga Modal per Satuan */}
-            <div>
-              <label className="block text-gray-700 text-sm font-semibold mb-1">
-                Harga Modal <span className="text-red-500">*</span>
+                Isi Pembelian <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="cost_per_unit"
-                value={formData.cost_per_unit}
+                name="qty_beli"
+                value={formData.qty_beli}
                 onChange={handleChange}
-                placeholder="15000"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="1"
+                step="0.01"
+                min="0.01"
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+            <div className="col-span-2">
+              <label className="block text-gray-700 text-sm font-semibold mb-1">
+                Satuan Pembelian <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="satuan_beli"
+                value={formData.satuan_beli}
+                onChange={handleChange}
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                required
+              >
+                <option value="kg">Kilogram (kg)</option>
+                <option value="gram">Gram (g)</option>
+                <option value="liter">Liter (L)</option>
+                <option value="ml">Mililiter (ml)</option>
+                <option value="pack">Pack / Bungkus</option>
+                <option value="lembar">Lembar</option>
+                <option value="pcs">Pcs / Butir</option>
+              </select>
+            </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg animate-fadeIn">
+          {/* Total Harga Beli */}
+          <div>
+            <label className="block text-gray-700 text-sm font-semibold mb-1">
+              Harga Total Pembelian (Rp) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="total_harga_beli"
+              value={formData.total_harga_beli}
+              onChange={handleChange}
+              placeholder="Contoh: 45000"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+              <FiInfo className="w-3 h-3" />
+              Contoh: isi 1 kg dengan harga 15000 akan dihitung sebagai Rp15/gram di database.
+            </p>
+          </div>
+
+          {/* Stok Awal */}
+          <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg">
             <label className="block text-blue-800 text-sm font-semibold mb-1">
-              {editingItem ? 'Stok Gudang' : 'Stok Awal di Gudang'} <span className="text-red-500">*</span>
+              Stok Awal Gudang <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -170,9 +203,7 @@ export default function BahanBakuFormModal({
               required
             />
             <p className="text-xs text-blue-600 mt-1">
-              {editingItem
-                ? 'Masukkan jumlah stok fisik terbaru di gudang.'
-                : 'Jumlah fisik barang yang langsung dimasukkan ke inventory.'}
+              Masukkan stok dalam <strong>{formData.satuan_beli}</strong>. Contoh: punya 100 kg, ketik 100.
             </p>
           </div>
 
@@ -186,14 +217,14 @@ export default function BahanBakuFormModal({
               onChange={handleChange}
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
             />
-            <label htmlFor="is_perishable" className="text-gray-700 font-medium cursor-pointer select-none">
+            <label htmlFor="is_perishable" className="text-gray-700 font-medium cursor-pointer select-none text-sm">
               Bahan ini mudah busuk/rusak (Perishable)
             </label>
           </div>
 
           {/* Masa Simpan (Muncul jika checkbox dicentang) */}
           {formData.is_perishable && (
-            <div className="animate-slideDown">
+            <div className="animate-fadeIn">
               <label className="block text-gray-700 text-sm font-semibold mb-1">
                 Masa Simpan Ideal (Hari)
               </label>
@@ -202,14 +233,14 @@ export default function BahanBakuFormModal({
                 name="shelf_life_days"
                 value={formData.shelf_life_days}
                 onChange={handleChange}
-                placeholder="Contoh: 7"
+                placeholder="Contoh: 3"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}

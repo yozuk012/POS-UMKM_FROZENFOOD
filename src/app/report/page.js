@@ -17,7 +17,7 @@ export default function ReportPage() {
   });
 
   // Mengambil data dari hook
-  const { reports, summary, loading } = useReport();
+  const { reports, operationalExpenses, loading } = useReport();
 
   // Logika Filtering Data berdasarkan Channel dan Tanggal
   const filteredReports = useMemo(() => {
@@ -49,7 +49,17 @@ export default function ReportPage() {
   const filteredSummary = useMemo(() => {
     const totalSales = filteredReports.reduce((sum, r) => sum + r.totalSales, 0);
     const totalHpp = filteredReports.reduce((sum, r) => sum + r.totalHpp, 0);
-    const totalOps = filteredReports.reduce((sum, r) => sum + r.totalOps, 0);
+    const totalOps = operationalExpenses
+      .filter((expense) => {
+        if (!dateRange.start && !dateRange.end) return true;
+
+        const expenseDate = new Date(`${expense.expense_date}T00:00:00`);
+        const startDate = dateRange.start ? new Date(`${dateRange.start}T00:00:00`) : null;
+        const endDate = dateRange.end ? new Date(`${dateRange.end}T23:59:59.999`) : null;
+
+        return (!startDate || expenseDate >= startDate) && (!endDate || expenseDate <= endDate);
+      })
+      .reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
     const totalProducts = filteredReports.reduce((sum, r) => sum + r.totalProducts, 0);
 
     return {
@@ -61,7 +71,7 @@ export default function ReportPage() {
       totalTransactions: filteredReports.length,
       totalProducts,
     };
-  }, [filteredReports]);
+  }, [filteredReports, operationalExpenses, dateRange]);
 
   return (
     <PageLayout title="Laporan">

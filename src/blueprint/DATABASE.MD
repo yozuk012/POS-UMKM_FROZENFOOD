@@ -23,6 +23,7 @@ Dokumen ini berisi spesifikasi tabel, kolom, tipe data, serta penjelasan fungsi 
 - **`sales`**: Header Transaksi Penjualan (Struk)
 - **`sale_items`**: Rincian Barang Penjualan
 - **`inventory`**: Stok Fisik Gudang & Toko
+- **`operational_expenses`**: Biaya Operasional Toko
 - **`backups`**: Riwayat & Log Ekspor Data
 
 ---
@@ -77,8 +78,11 @@ Daftar persediaan bahan baku dan kemasan mentah.
 - **`id`** (`int8` - PK): ID unik bahan baku.
 - **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
 - **`name`** (`varchar`): Nama bahan mentah/kemasan.
-- **`unit`** (`varchar`): Satuan ukur (`kg`, `gram`, `pcs`, dll.).
-- **`cost_per_unit`** (`numeric`): Biaya/modal per unit satuan.
+- **`unit`** (`varchar`): Satuan dasar untuk stok dan HPP (`gram`, `ml`, `pcs`, dll.).
+- **`cost_per_unit`** (`numeric`): Biaya/modal per satu unit dasar.
+- **`purchase_unit`** (`varchar`): Satuan pembelian yang ditampilkan kepada pengguna (`kg`, `liter`, dll.).
+- **`purchase_quantity`** (`numeric`): Jumlah pada satu pembelian/satuan tampilan.
+- **`purchase_price`** (`numeric`): Harga total untuk `purchase_quantity` pada `purchase_unit`.
 - **`is_perishable`** (`bool`): Indikator bahan mudah membusuk/rusak.
 - **`shelf_life_days`** (`int4`): Masa simpan ideal (dalam satuan hari).
 - **`created_at`** (`timestamptz`): Tanggal pendaftaran.
@@ -202,3 +206,16 @@ Pencatatan riwayat ekspor dan pengarsipan data.
 - **`status`** (`varchar`): Status ekspor (`pending`, `completed`, dll.).
 - **`completed_at`** (`timestamptz`): Tanggal & waktu penyelesaian ekspor.
 - **`created_at`** (`timestamptz`): Tanggal pembuatan permintaan ekspor.
+
+---
+
+### 13. 💸 `operational_expenses`
+Menyimpan biaya operasional toko secara terpisah dari HPP bahan baku.
+
+- **`id`** (`int8` - PK): ID unik biaya operasional.
+- **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
+- **`expense_date`** (`date`): Tanggal biaya dibebankan.
+- **`category`** (`varchar`): Kategori biaya, misalnya `Gaji`, `Sewa Tempat`, `Listrik & Air`, `Pemasaran`, atau `Lainnya`.
+- **`description`** (`text`): Keterangan biaya.
+- **`amount`** (`numeric`): Nilai biaya, minimal 0.
+- **`created_at`** (`timestamptz`): Waktu pencatatan biaya.
