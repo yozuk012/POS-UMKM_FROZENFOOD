@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import useProducts from "@/hooks/useProducts";
+import CopyDataModal from "@/components/CopyDataModal";
 
 // Import semua komponen yang sudah dipecah
 import ProductHeader from "./components/ProductHeader";
@@ -11,6 +13,8 @@ import ProductPagination from "./components/ProductPagination";
 import ProductFormModal from "./components/ProductFormModal";
 
 export default function ProductsPage() {
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+
   // Semua state dan handler tetap di-handle oleh custom hook
   const {
     stores, categories, products, loading,
@@ -23,12 +27,16 @@ export default function ProductsPage() {
     filterStatus, setFilterStatus,
     currentPage, setCurrentPage,
     totalItems, itemsPerPage,
+    refetch, fetchCategories
   } = useProducts();
 
   return (
     <PageLayout title="Manajemen Produk">
       {/* 1. Header Halaman */}
-      <ProductHeader openAddModal={openAddModal} />
+      <ProductHeader
+        openAddModal={openAddModal}
+        onOpenCopyModal={() => setIsCopyModalOpen(true)}
+      />
 
       {/* 2. Filter & Search */}
       <ProductFilters
@@ -54,6 +62,8 @@ export default function ProductsPage() {
         openEditModal={openEditModal}
         toggleProductStatus={toggleProductStatus}
         deleteProduct={deleteProduct}
+        onOpenCopyModal={() => setIsCopyModalOpen(true)}
+        openAddModal={openAddModal}
       />
 
       {/* 4. Pagination */}
@@ -79,6 +89,18 @@ export default function ProductsPage() {
         handleFileChange={handleFileChange}
         stores={stores}
         categories={categories}
+      />
+
+      {/* 6. Modal Salin Produk */}
+      <CopyDataModal
+        isOpen={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        type="products"
+        title="Produk"
+        onCopySuccess={() => {
+          refetch();
+          if (fetchCategories) fetchCategories();
+        }}
       />
     </PageLayout>
   );

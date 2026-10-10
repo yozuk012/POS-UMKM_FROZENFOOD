@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
 
 export default function useTransaction() {
   const { user } = useAuth();
@@ -46,23 +47,29 @@ export default function useTransaction() {
   // 2. FETCH CATEGORIES & STORE INFO
   // ==========================================
   useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
-
     const fetchInitialData = async () => {
-      const { data: storeData, error: storeError } = await supabase
+      if (!user?.id) {
+        setStoreId(null);
+        setProducts([]);
+        setCategories([]);
+        setCartItems([]);
+        return;
+      }
+
+      const { data: stores, error: storeError } = await supabase
         .from('stores')
         .select('id, name, logo_url, address, qris_code_url, qris_merchant_id, bank_name, account_number, account_name')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('id', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('id', { ascending: true });
+
+      const storeData = resolveActiveStore(stores);
 
       if (storeError || !storeData) {
         setStoreId(null);
         setCategories([]);
+        setProducts([]);
+        setCartItems([]);
         return;
       }
 
@@ -80,7 +87,7 @@ export default function useTransaction() {
         .eq('store_id', storeData.id)
         .order('name', { ascending: true });
       
-      if (catData) setCategories(catData);
+      setCategories(catData || []);
 
       if (storeData.qris_code_url) {
         const cleanUrl = storeData.qris_code_url.replace(/^(https?:\/\/)+/i, 'https://');
@@ -98,6 +105,24 @@ export default function useTransaction() {
     };
 
     fetchInitialData();
+
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: TRANSAKSI KOSONG, PRODUK KOSONG, KATEGORI KOSONG
+      setCartItems([]);
+      setDiscount(0);
+      setCustomerName('');
+      setReceiptData(null);
+      setIsPaymentModalOpen(false);
+      setProducts([]);
+      setCategories([]);
+      setTotalItems(0);
+      setCategoryId('all');
+      setSearch('');
+      fetchInitialData();
+    };
+
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id]);
 
   // ==========================================

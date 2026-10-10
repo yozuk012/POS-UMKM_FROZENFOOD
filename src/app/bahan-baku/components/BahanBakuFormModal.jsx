@@ -27,6 +27,7 @@ export default function BahanBakuFormModal({
     if (isOpen) {
       if (editingItem) {
         const purchaseValues = getPurchaseEditValues(editingItem);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData({
           name: editingItem.name || '',
           qty_beli: String(purchaseValues.quantity),

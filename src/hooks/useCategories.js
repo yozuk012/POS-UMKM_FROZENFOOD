@@ -1,9 +1,7 @@
-// src/hooks/useCategories.js
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 export function useCategories() {
   const { user } = useAuth();
@@ -28,7 +26,11 @@ export function useCategories() {
   // 2. FETCH DATA (READ)
   // ==========================================
   const fetchStores = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setStores([]);
+      setCategories([]);
+      return;
+    }
     const { data, error } = await supabase
       .from('stores')
       .select('id, name')
@@ -36,7 +38,13 @@ export function useCategories() {
       .eq('is_active', true)
       .order('name');
 
-    if (!error) setStores(data || []);
+    if (!error && data && data.length > 0) {
+      const activeStore = resolveActiveStore(data);
+      setStores(activeStore ? [activeStore] : []);
+    } else {
+      setStores([]);
+      setCategories([]);
+    }
   }, [user?.id]);
 
   const fetchCategories = useCallback(async () => {
@@ -56,11 +64,29 @@ export function useCategories() {
       .order('created_at', { ascending: false });
 
     if (!error) setCategories(data || []);
+    else setCategories([]);
     setLoading(false);
   }, [user?.id, stores]);
 
-  useEffect(() => { if (user?.id) fetchStores(); }, [user?.id, fetchStores]);
-  useEffect(() => { if (stores.length > 0) fetchCategories(); }, [stores, fetchCategories]);
+  useEffect(() => { 
+    if (user?.id) fetchStores(); 
+    const handleStoreChange = () => {
+      // Ketika switch toko: kategori kosong
+      setCategories([]);
+      fetchStores();
+    };
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+  }, [user?.id, fetchStores]);
+
+  useEffect(() => { 
+    if (stores.length > 0) {
+      fetchCategories(); 
+    } else {
+      setCategories([]);
+      setLoading(false);
+    }
+  }, [stores, fetchCategories]);
 
   // ==========================================
   // 3. FORM & MODAL HANDLERS
@@ -72,7 +98,7 @@ export function useCategories() {
   };
 
   const resetForm = () => {
-    setFormData({ store_id: '', name: '' });
+    setFormData({ store_id: stores.length > 0 ? String(stores[0].id) : '', name: '' });
     setEditingId(null);
     setError(null);
   };
@@ -155,6 +181,7 @@ export function useCategories() {
     isModalOpen, // <-- State Modal
     handleChange, handleSubmit, deleteCategory,
     openAddModal, openEditModal, closeModal, // <-- Handlers Modal
+    refetch: fetchCategories,
   };
 }
 

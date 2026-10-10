@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 /**
  * Hook khusus untuk mengelola Biaya Operasional Toko (Period Cost).
@@ -34,24 +35,28 @@ export default function useHppOperasional() {
     return amount;
   };
 
-  // 1. Fetch Store ID saat user login
+  // 1. Fetch Store ID saat user login & listen switch store
   useEffect(() => {
+    if (!user?.id) {
+      setStoreId(null);
+      setExpenses([]);
+      return;
+    }
+
     const fetchStore = async () => {
-      if (!user?.id) return;
-      
       try {
-        const { data: storeData, error: storeError } = await supabase
+        const { data: stores, error: storeError } = await supabase
           .from('stores')
           .select('id')
           .eq('user_id', user.id)
           .eq('is_active', true)
-          .order('id', { ascending: true })
-          .limit(1)
-          .maybeSingle();
+          .order('id', { ascending: true });
 
         if (storeError) throw storeError;
-        if (storeData) {
-          setStoreId(storeData.id);
+        const activeStore = resolveActiveStore(stores);
+        setStoreId(activeStore ? activeStore.id : null);
+        if (!activeStore) {
+          setExpenses([]);
         }
       } catch (err) {
         console.error('Gagal memuat data toko:', err);
@@ -59,6 +64,15 @@ export default function useHppOperasional() {
     };
 
     fetchStore();
+
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: PENGELUARAN KOSONG
+      setExpenses([]);
+      fetchStore();
+    };
+
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id]);
 
   // 2. Fetch Data Operasional berdasarkan rentang tanggal
@@ -103,6 +117,9 @@ export default function useHppOperasional() {
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toLocaleDateString('sv-SE');
       
       fetchExpenses(firstDay, lastDay);
+    } else {
+      setExpenses([]);
+      setIsLoading(false);
     }
   }, [storeId, fetchExpenses]);
 

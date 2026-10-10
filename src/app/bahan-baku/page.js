@@ -9,7 +9,8 @@ import useBahanBaku from '@/hooks/useBahanBaku';
 
 import BahanBakuList from './components/BahanBakuList';
 import BahanBakuFormModal from './components/BahanBakuFormModal';
-import { FiPlus, FiSearch, FiArrowLeft } from 'react-icons/fi';
+import CopyDataModal from '@/components/CopyDataModal';
+import { FiPlus, FiSearch, FiArrowLeft, FiCopy } from 'react-icons/fi';
 
 export default function BahanBakuPage() {
   const router = useRouter();
@@ -22,12 +23,14 @@ export default function BahanBakuPage() {
     error, 
     addBahanBaku, 
     updateBahanBaku, 
-    deleteBahanBaku 
+    deleteBahanBaku,
+    refetch
   } = useBahanBaku();
 
   // 2. State Lokal untuk UI
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null); 
 
   // 3. Filter Data berdasarkan Search (Case-insensitive)
@@ -101,14 +104,27 @@ export default function BahanBakuPage() {
             <p className="text-sm text-gray-500">Kelola stok bahan mentah, kemasan, dan harga modal Anda</p>
           </div>
 
-          <button
-            onClick={handleAddNew}
-            disabled={isMutating}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
-          >
-            <FiPlus className="w-5 h-5" />
-            Tambah Bahan Baku
-          </button>
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setIsCopyModalOpen(true)}
+              disabled={isMutating}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="Salin bahan baku dari cabang lain"
+            >
+              <FiCopy className="w-5 h-5 text-blue-600" />
+              <span>Salin Bahan Baku</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleAddNew}
+              disabled={isMutating}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
+            >
+              <FiPlus className="w-5 h-5" />
+              <span>Tambah Bahan Baku</span>
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -130,6 +146,8 @@ export default function BahanBakuPage() {
           error={error}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onOpenCopyModal={() => setIsCopyModalOpen(true)}
+          onAddNew={handleAddNew}
         />
 
         {/* Modal Form */}
@@ -142,6 +160,15 @@ export default function BahanBakuPage() {
           editingItem={editingItem}
           onSubmit={handleSubmitForm}
           isSubmitting={isMutating}
+        />
+
+        {/* Modal Salin Bahan Baku */}
+        <CopyDataModal
+          isOpen={isCopyModalOpen}
+          onClose={() => setIsCopyModalOpen(false)}
+          type="raw_materials"
+          title="Bahan Baku"
+          onCopySuccess={refetch}
         />
 
       </div>

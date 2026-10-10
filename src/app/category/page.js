@@ -1,15 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import useCategories from "@/hooks/useCategories";
+import CopyDataModal from "@/components/CopyDataModal";
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaFolderOpen } from "react-icons/fa";
+import { FiCopy } from "react-icons/fi";
 
 export default function CategoriesPage() {
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+
   // Ambil semua state dan handler dari hook
   const {
     stores, categories, loading, formData, editingId, error, isSubmitting, isModalOpen,
     handleChange, handleSubmit, deleteCategory,
-    openAddModal, openEditModal, closeModal
+    openAddModal, openEditModal, closeModal, refetch
   } = useCategories();
 
   const formatDate = (dateString) => {
@@ -25,13 +30,23 @@ export default function CategoriesPage() {
           <h1 className="text-xl font-bold text-gray-800">Manajemen Kategori</h1>
           <p className="text-gray-500 text-xs mt-0.5">Kelompokkan produk agar rapi saat transaksi.</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm"
-        >
-          <FaPlus size={12} />
-          <span>Tambah</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsCopyModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium rounded-lg shadow-xs transition-colors"
+            title="Salin kategori dari cabang lain"
+          >
+            <FiCopy size={13} className="text-blue-600" />
+            <span>Salin Kategori</span>
+          </button>
+          <button
+            onClick={openAddModal}
+            className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm"
+          >
+            <FaPlus size={12} />
+            <span>Tambah</span>
+          </button>
+        </div>
       </div>
 
       {/* KONTEN UTAMA */}
@@ -45,7 +60,14 @@ export default function CategoriesPage() {
           <div className="p-8 text-center text-gray-500">
             <FaFolderOpen className="mx-auto text-3xl text-gray-300 mb-2" />
             <p className="text-sm font-medium text-gray-700">Belum ada kategori</p>
-            <p className="text-xs mt-1">Klik tombol "Tambah" untuk membuat kategori pertama.</p>
+            <p className="text-xs mt-1">Klik tombol &quot;Tambah&quot; atau salin dari cabang toko lain.</p>
+            <button
+              onClick={() => setIsCopyModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 mt-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
+            >
+              <FiCopy size={13} />
+              <span>Salin Kategori dari Cabang Lain</span>
+            </button>
           </div>
         ) : (
           <>
@@ -202,6 +224,15 @@ export default function CategoriesPage() {
           </form>
         </div>
       )}
+
+      {/* MODAL SALIN KATEGORI */}
+      <CopyDataModal
+        isOpen={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        type="categories"
+        title="Kategori"
+        onCopySuccess={refetch}
+      />
     </PageLayout>
   );
 }

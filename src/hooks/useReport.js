@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 export default function useReport() {
   const { user } = useAuth();
@@ -34,23 +35,41 @@ export default function useReport() {
       if (!user?.id) {
         setReports([]);
         setOperationalExpenses([]);
+        setSummary({
+          totalSales: 0,
+          totalHpp: 0,
+          totalOps: 0,
+          grossProfit: 0,
+          netProfit: 0,
+          netProfitMargin: 0,
+          totalTransactions: 0,
+        });
         return;
       }
 
-      // 1. Ambil Store ID
-      const { data: store, error: storeError } = await supabase
+      // 1. Ambil Store Aktif
+      const { data: stores, error: storeError } = await supabase
         .from('stores')
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('id', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('id', { ascending: true });
 
       if (storeError) throw storeError;
+      const store = resolveActiveStore(stores);
+
       if (!store) {
         setReports([]);
         setOperationalExpenses([]);
+        setSummary({
+          totalSales: 0,
+          totalHpp: 0,
+          totalOps: 0,
+          grossProfit: 0,
+          netProfit: 0,
+          netProfitMargin: 0,
+          totalTransactions: 0,
+        });
         return;
       }
 
@@ -177,11 +196,28 @@ export default function useReport() {
     }
   }, [user]);
 
-  // Auto-fetch saat user login
+  // Auto-fetch saat user login & listen switch store
   useEffect(() => {
     if (user?.id) {
       fetchReports();
     }
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: LAPORAN KOSONG
+      setReports([]);
+      setOperationalExpenses([]);
+      setSummary({
+        totalSales: 0,
+        totalHpp: 0,
+        totalOps: 0,
+        grossProfit: 0,
+        netProfit: 0,
+        netProfitMargin: 0,
+        totalTransactions: 0,
+      });
+      fetchReports();
+    };
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user, fetchReports]);
 
   return {

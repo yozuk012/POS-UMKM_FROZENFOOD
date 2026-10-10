@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { convertPurchaseToBase, getUnitDefinition } from '@/lib/rawMaterialUtils';
+import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
 
 const isMissingPurchaseMetadata = (error) => (
   /purchase_(unit|quantity|price)/.test(error?.message || '') &&
@@ -68,29 +69,46 @@ export default function useBahanBaku() {
     }
   };
 
-  // Ambil store_id saat user login
+  // Ambil store_id saat user login & listen switch store
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setStoreId(null);
+      setBahanBaku([]);
+      return;
+    }
 
     const fetchStore = async () => {
-      const { data } = await supabase
+      const { data: stores } = await supabase
         .from('stores')
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('id', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('id', { ascending: true });
 
-      setStoreId(data?.id || null);
+      const activeStore = resolveActiveStore(stores);
+      setStoreId(activeStore ? activeStore.id : null);
+      if (!activeStore) {
+        setBahanBaku([]);
+      }
     };
 
     fetchStore();
+
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: BAHAN BAKU KOSONG
+      setBahanBaku([]);
+      fetchStore();
+    };
+
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id]);
 
   useEffect(() => {
     if (storeId) {
       fetchBahanBaku();
+    } else {
+      setBahanBaku([]);
     }
   }, [storeId]);
 

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { useConvert } from './useConvertImages';
+import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
+import { getOnlinePrice } from '@/lib/productUtils';
 
 export function useProducts() {
   const { user } = useAuth();
@@ -33,6 +35,8 @@ export function useProducts() {
     unit: 'pack',
     stock: '0',
     is_active: true,
+    is_online: false,
+    online_markup_pct: '0',
     image_file: null,
     image_preview: null,
   };
@@ -80,21 +84,38 @@ export function useProducts() {
   // 4. FETCH DATA (READ)
   // ==========================================
   const fetchStores = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setStores([]);
+      setCategories([]);
+      setProducts([]);
+      setTotalItems(0);
+      return;
+    }
     const { data } = await supabase
       .from('stores')
       .select('id, name')
       .eq('user_id', user.id)
       .eq('is_active', true);
     
-    if (data) setStores(data);
+    if (data && data.length > 0) {
+      const activeStore = resolveActiveStore(data);
+      setStores(activeStore ? [activeStore] : []);
+    } else {
+      setStores([]);
+      setCategories([]);
+      setProducts([]);
+      setTotalItems(0);
+    }
   }, [user?.id]);
 
   const fetchCategories = useCallback(async () => {
-    if (!user?.id || stores.length === 0) return;
+    if (!user?.id || stores.length === 0) {
+      setCategories([]);
+      return;
+    }
     const storeIds = stores.map(s => s.id);
     const { data } = await supabase.from('categories').select('id, name, store_id').in('store_id', storeIds);
-    if (data) setCategories(data);
+    setCategories(data || []);
   }, [user?.id, stores]);
 
   const fetchProducts = useCallback(async () => {
@@ -176,6 +197,7 @@ export function useProducts() {
           stock: Array.isArray(p.inventory) ? (p.inventory[0]?.qty_on_hand || 0) : (p.inventory?.qty_on_hand || 0),
           has_online_price: !!onlinePriceData,
           online_price: onlinePriceData ? onlinePriceData.price : 0,
+          online_markup_pct: p.online_markup_pct || 0,
           display_offline_price: offlinePriceData ? offlinePriceData.price : p.base_price,
         };
       });
@@ -191,13 +213,29 @@ export function useProducts() {
 
   useEffect(() => { 
     if (user?.id) fetchStores(); 
+    const handleStoreChange = () => {
+      // Ketika switch toko: produk kosong, kategori kosong, reset filter
+      setProducts([]);
+      setCategories([]);
+      setTotalItems(0);
+      setFilterCategory('all');
+      setCurrentPage(1);
+      setSearchQuery('');
+      fetchStores();
+    };
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id, fetchStores]);
 
   useEffect(() => { 
     if (stores.length > 0) { 
       fetchCategories(); 
       fetchProducts(); 
-    } 
+    } else {
+      setCategories([]);
+      setProducts([]);
+      setTotalItems(0);
+    }
   }, [stores, fetchCategories, fetchProducts]);
 
   // ==========================================
@@ -276,6 +314,8 @@ export function useProducts() {
       base_price: String(product.base_price || 0),
       hpp: String(product.hpp || 0),
       discount_pct: String(product.discount_pct || 0),
+      is_online: product.has_online_price,
+      online_markup_pct: String(product.online_markup_pct || 0),
       stock: String(product.stock || 0),
       is_active: product.is_active !== false,
       image_file: null,
@@ -307,8 +347,12 @@ export function useProducts() {
 
     const stockVal = parseNumber(formData.stock);
     const basePrice = parseDecimal(formData.base_price);
+    const onlineMarkupPct = parseDecimal(formData.online_markup_pct);
 
     if (stockVal < 0) return setError('Stok tidak boleh minus.');
+    if (onlineMarkupPct < 0 || onlineMarkupPct > 100) {
+      return setError('Persentase harga online harus antara 0 dan 100.');
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -337,6 +381,7 @@ export function useProducts() {
         }),
         image_url: finalImageUrl,
         is_active: formData.is_active !== false,
+        online_markup_pct: formData.is_online ? onlineMarkupPct : 0,
       };
 
       let productId = editingId;
@@ -348,6 +393,36 @@ export function useProducts() {
         const { data, error } = await supabase.from('products').insert(productPayload).select().single();
         if (error) throw new Error('Gagal insert produk: ' + error.message);
         productId = data.id;
+      }
+
+      const { data: existingOnlinePrice } = await supabase
+        .from('product_prices')
+        .select('id')
+        .eq('product_id', productId)
+        .eq('channel', 'online')
+        .maybeSingle();
+
+      if (formData.is_online) {
+        const onlinePrice = getOnlinePrice(basePrice, onlineMarkupPct);
+        const onlinePricePayload = {
+          product_id: productId,
+          channel: 'online',
+          price: onlinePrice,
+          platform_fee_pct: 0,
+        };
+
+        const { error: onlinePriceError } = existingOnlinePrice
+          ? await supabase.from('product_prices').update(onlinePricePayload).eq('id', existingOnlinePrice.id)
+          : await supabase.from('product_prices').insert(onlinePricePayload);
+
+        if (onlinePriceError) throw new Error('Gagal menyimpan harga online: ' + onlinePriceError.message);
+      } else if (existingOnlinePrice) {
+        const { error: onlinePriceError } = await supabase
+          .from('product_prices')
+          .delete()
+          .eq('id', existingOnlinePrice.id);
+
+        if (onlinePriceError) throw new Error('Gagal menghapus harga online: ' + onlinePriceError.message);
       }
 
       // Update Inventory
@@ -422,6 +497,8 @@ export function useProducts() {
     resetFilters,
     handleChange, handleFileChange, handleSubmit, deleteProduct, toggleProductStatus,
     openAddModal, openEditModal, closeModal,
+    refetch: fetchProducts,
+    fetchCategories,
   };
 }
 

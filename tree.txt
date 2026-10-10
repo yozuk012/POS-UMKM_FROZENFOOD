@@ -70,7 +70,13 @@ my-pos
 │   │   │       │   └── page.js
 │   │   │       ├── Persentase-Online
 │   │   │       │   └── page.js
-│   │   │       ├── switch-account
+│   │   │       ├── stores
+│   │   │       │   ├── components
+│   │   │       │   │   ├── ActionDialog.jsx
+│   │   │       │   │   ├── StoreCard.jsx
+│   │   │       │   │   ├── StoreFormModal.jsx
+│   │   │       │   │   ├── StoreHeader.jsx
+│   │   │       │   │   └── StoreList.jsx
 │   │   │       │   └── page.js
 │   │   │       └── page.js
 │   │   ├── test-connection
@@ -91,9 +97,11 @@ my-pos
 │   │   ├── RAW_MATERIAL_UNIT_MIGRATION.sql
 │   │   └── RELATION.md
 │   ├── components
+│   │   ├── CopyDataModal.jsx
 │   │   ├── PageLayout.js
 │   │   └── Sidebar.js
 │   ├── hooks
+│   │   ├── useAddStore.js
 │   │   ├── useAuth.js
 │   │   ├── useBahanBaku.js
 │   │   ├── useCategories.js
@@ -110,6 +118,8 @@ my-pos
 │   │   ├── useReport.js
 │   │   └── useTransaction.js
 │   └── lib
+│       ├── activeStore.js
+│       ├── copyStoreData.js
 │       ├── productUtils.js
 │       ├── rawMaterialUtils.js
 │       └── supabase.js

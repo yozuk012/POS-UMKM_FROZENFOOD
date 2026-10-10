@@ -1,8 +1,11 @@
 // src/hooks/useHistory.js
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 export default function useHistory() {
+  const { user } = useAuth();
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,11 +15,34 @@ export default function useHistory() {
   const [activePeriodIndex, setActivePeriodIndex] = useState(0);
 
   const fetchHistory = useCallback(async () => {
+    if (!user?.id) {
+      setRawData([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Ambil semua transaksi (limit 1000 untuk performa)
+      // 1. Ambil Toko Aktif
+      const { data: stores, error: storeError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('id', { ascending: true });
+
+      if (storeError) throw storeError;
+      const activeStore = resolveActiveStore(stores);
+
+      if (!activeStore) {
+        setRawData([]);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Ambil transaksi toko aktif saja (limit 1000 untuk performa)
       const { data, error: fetchError } = await supabase
         .from('sales')
         .select(`
@@ -32,6 +58,7 @@ export default function useHistory() {
             products ( name )
           )
         `)
+        .eq('store_id', activeStore.id)
         .order('sale_date', { ascending: false })
         .limit(1000);
 
@@ -77,11 +104,20 @@ export default function useHistory() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    if (user?.id) {
+      fetchHistory();
+    }
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: HISTORY KOSONG
+      setRawData([]);
+      fetchHistory();
+    };
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+  }, [user?.id, fetchHistory]);
 
   // 1. Filter berdasarkan channel
   const filteredData = useMemo(() => {

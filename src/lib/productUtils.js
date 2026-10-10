@@ -16,3 +16,17 @@ export const getDiscountedPrice = (basePrice, discountPct) => {
   if (pct <= 0) return null;
   return parseFloat(basePrice) - parseFloat(basePrice) * (pct / 100);
 };
+
+export const getRecommendedPrice = (hppPerUnit, marginPct = 50) => {
+  const hpp = Number(hppPerUnit) || 0;
+  const margin = Number(marginPct) || 0;
+  const calculatedPrice = hpp * (1 + margin / 100);
+  return Math.round(calculatedPrice / 500) * 500;
+};
+
+export const getOnlinePrice = (basePrice, markupPct = 0) => {
+  const base = Number(basePrice) || 0;
+  const markup = Number(markupPct) || 0;
+  const calculatedPrice = base * (1 + markup / 100);
+  return Math.ceil(calculatedPrice / 1000) * 1000;
+};

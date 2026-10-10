@@ -1,6 +1,7 @@
 "use client";
 
-import { FaBoxOpen, FaEdit, FaTrash, FaPowerOff, FaGlobe, FaExclamation } from "react-icons/fa";
+import { FaBoxOpen, FaEdit, FaTrash, FaPowerOff, FaGlobe, FaExclamation, FaPlus } from "react-icons/fa";
+import { FiCopy } from "react-icons/fi";
 
 // Helper lokal
 const formatRupiah = (number) => {
@@ -27,6 +28,8 @@ export default function ProductList({
   openEditModal,
   toggleProductStatus,
   deleteProduct,
+  onOpenCopyModal,
+  openAddModal,
 }) {
   const hasActiveFilters =
     searchQuery ||
@@ -42,16 +45,40 @@ export default function ProductList({
           Memuat data produk...
         </div>
       ) : products.length === 0 ? (
-        <div className="p-8 text-center text-gray-500 min-h-[200px] flex flex-col items-center justify-center">
-          <FaBoxOpen className="text-3xl text-gray-300 mb-2" />
-          <p className="text-sm font-medium text-gray-700">
-            {hasActiveFilters ? "Tidak ada produk yang cocok dengan filter." : "Belum ada produk"}
+        <div className="p-10 text-center text-gray-500 min-h-[220px] flex flex-col items-center justify-center">
+          <FaBoxOpen className="text-4xl text-gray-300 mb-3" />
+          <p className="text-base font-bold text-gray-800">
+            {hasActiveFilters ? "Tidak ada produk yang cocok dengan filter." : "Belum Ada Produk"}
           </p>
-          <p className="text-xs mt-1">
+          <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
             {hasActiveFilters
               ? "Coba ubah kata kunci atau reset filter Anda."
-              : 'Klik tombol "Tambah Produk" untuk mulai berjualan.'}
+              : 'Belum ada produk di cabang ini. Anda dapat menyalin data produk dari cabang lain (termasuk resep & bahan baku) atau menambahkan produk baru.'}
           </p>
+          {!hasActiveFilters && (
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+              {onOpenCopyModal && (
+                <button
+                  type="button"
+                  onClick={onOpenCopyModal}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold text-sm transition-colors border border-blue-200 active:scale-95 cursor-pointer shadow-xs"
+                >
+                  <FiCopy className="w-4 h-4 text-blue-600" />
+                  <span>Salin Produk dari Cabang Lain</span>
+                </button>
+              )}
+              {openAddModal && (
+                <button
+                  type="button"
+                  onClick={openAddModal}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-semibold text-sm transition-colors shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <FaPlus className="w-3.5 h-3.5" />
+                  <span>Tambah Produk Baru</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <>

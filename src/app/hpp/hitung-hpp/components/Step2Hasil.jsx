@@ -1,6 +1,7 @@
 'use client';
 
 import { FiCheckCircle, FiArrowLeft, FiSave, FiTrendingUp, FiInfo, FiAlertTriangle } from 'react-icons/fi';
+import { getRecommendedPrice } from '@/lib/productUtils';
 
 export default function Step2Hasil({
   namaProduk,
@@ -17,8 +18,10 @@ export default function Step2Hasil({
   // 2. Kalkulasi Saran Harga Jual 
   // Kita gunakan margin yang lebih tinggi (50% - 75%) sebagai "pengaman" 
   // untuk menutup biaya operasional yang dicatat di halaman terpisah.
-  const hitungMargin = (persen) => {
-    const hargaJual = hppPerUnit * (1 + persen / 100);
+  const hitungMargin = (persen, gunakanHargaBulat = false) => {
+    const hargaJual = gunakanHargaBulat
+      ? getRecommendedPrice(hppPerUnit, persen)
+      : hppPerUnit * (1 + persen / 100);
     const profitPerProduk = hargaJual - hppPerUnit;
     const totalProfit = profitPerProduk * qty;
     
@@ -31,7 +34,7 @@ export default function Step2Hasil({
 
   const saranHarga = {
     margin35: hitungMargin(35), // Minimum
-    margin50: hitungMargin(50), // Rekomendasi (Aman untuk operasional)
+    margin50: hitungMargin(50, true), // Rekomendasi (Aman untuk operasional)
     margin75: hitungMargin(75), // Premium
   };
 

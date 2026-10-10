@@ -1,7 +1,7 @@
-// src/hooks/useHppProduk.js
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 /**
  * Custom hook untuk mengelola daftar Produk & HPP
@@ -69,27 +69,45 @@ export default function useHppProduk() {
 
   useEffect(() => {
     if (!user?.id) {
+      setStoreId(null);
+      setProducts([]);
       return;
     }
 
     const fetchStore = async () => {
-      const { data } = await supabase
+      const { data: stores } = await supabase
         .from('stores')
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .order('id', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('id', { ascending: true });
 
-      setStoreId(data?.id || null);
+      const activeStore = resolveActiveStore(stores);
+      setStoreId(activeStore ? activeStore.id : null);
+      if (!activeStore) {
+        setProducts([]);
+      }
     };
 
     fetchStore();
+
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: HPP PRODUK KOSONG
+      setProducts([]);
+      fetchStore();
+    };
+
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id]);
 
   useEffect(() => {
-    fetchProducts();
+    if (storeId) {
+      fetchProducts();
+    } else {
+      setProducts([]);
+      setIsLoading(false);
+    }
   }, [storeId]);
 
   // 2. DELETE: Hapus produk dari database

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { convertToBaseQuantity } from '@/lib/rawMaterialUtils';
+import { getRecommendedPrice } from '@/lib/productUtils';
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
 
 const isMissingPurchaseMetadata = (error) => (
   /purchase_(unit|quantity|price)/.test(error?.message || '') &&
@@ -46,16 +48,15 @@ export default function useHppBahanBaku() {
         }
 
         // Ambil store_id aktif
-        const { data: storeData, error: storeError } = await supabase
+        const { data: stores, error: storeError } = await supabase
           .from('stores')
           .select('id')
           .eq('user_id', user.id)
           .eq('is_active', true)
-          .order('id', { ascending: true })
-          .limit(1)
-          .maybeSingle();
+          .order('id', { ascending: true });
 
         if (storeError) throw storeError;
+        const storeData = resolveActiveStore(stores);
         if (!storeData) {
           setStoreId(null);
           setRawMaterials([]);
@@ -102,6 +103,16 @@ export default function useHppBahanBaku() {
     };
 
     fetchData();
+
+    const handleStoreChange = () => {
+      // KETIKA SWITCH TOKO: BAHAN BAKU & KATEGORI RESEP KOSONG
+      setRawMaterials([]);
+      setCategories([]);
+      fetchData();
+    };
+
+    window.addEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, handleStoreChange);
   }, [user?.id]);
 
   // 2. Fungsi Utama: Submit Data HPP BAHAN BAKU & Resep ke Supabase
@@ -130,7 +141,7 @@ export default function useHppBahanBaku() {
       // Ini agar sesuai dengan rekomendasi "Paling Aman" di UI Step 2
       const safeBasePrice = Number.isFinite(Number(formData.hargaRekomendasi))
         ? Math.round(Number(formData.hargaRekomendasi))
-        : Math.round(hppSejatiRounded * 1.50);
+        : getRecommendedPrice(hppSejatiRounded);
 
       // Langkah 1: Cari atau Buat Produk
       let productId = null;

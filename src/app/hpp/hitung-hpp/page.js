@@ -11,6 +11,7 @@ import useHppBahanBaku from '@/hooks/useHppBahanBaku';
 import StepIndicator from './components/StepIndicator';
 import Step1BahanBaku from './components/Step1BahanBaku';
 import Step2Hasil from './components/Step2Hasil';
+import { getRecommendedPrice } from '@/lib/productUtils';
 
 export default function HitungHPPPage() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function HitungHPPPage() {
         jumlahProduk: jumlahProdukNum,
         satuanProduk: satuanProduk,
         hppPerProduk: hppBahanPerProduk, // Murni bahan baku
-        hargaRekomendasi: Math.round(hppBahanPerProduk * 1.5),
+        hargaRekomendasi: getRecommendedPrice(hppBahanPerProduk),
         totalBiayaOperasional: 0,        // 0 karena operasional dicatat terpisah
         bahanBakuList: bahanBakuList.map(b => ({
           raw_material_id: parseInt(b.raw_material_id, 10),

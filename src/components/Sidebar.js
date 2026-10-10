@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AiFillHome } from "react-icons/ai";
@@ -12,6 +12,8 @@ import { IoMdSettings } from "react-icons/io";
 import { FiLogOut, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { BiCategory } from "react-icons/bi";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { ACTIVE_STORE_EVENT, resolveActiveStore } from "@/lib/activeStore";
 
 const menuItems = [
   { name: "Beranda", href: "/", icon: AiFillHome },
@@ -39,6 +41,31 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   
   // State untuk mengontrol dropdown HPP
   const [isHppOpen, setIsHppOpen] = useState(false);
+  const [activeStoreName, setActiveStoreName] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setActiveStoreName(null);
+      return;
+    }
+    const fetchActiveStoreName = async () => {
+      try {
+        const { data: stores } = await supabase
+          .from('stores')
+          .select('id, name')
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+        const activeStore = resolveActiveStore(stores);
+        setActiveStoreName(activeStore?.name || null);
+      } catch (err) {
+        console.error('Failed to fetch active store name:', err);
+      }
+    };
+
+    fetchActiveStoreName();
+    window.addEventListener(ACTIVE_STORE_EVENT, fetchActiveStoreName);
+    return () => window.removeEventListener(ACTIVE_STORE_EVENT, fetchActiveStoreName);
+  }, [user?.id]);
 
   const handleLogout = async () => {
     await logout();
@@ -187,8 +214,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 <p className="text-sm font-semibold text-gray-800 truncate">
                   {merchant?.full_name || "User"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {merchant?.store_name || "Toko"}
+                <p className="text-xs text-gray-500 truncate" title={activeStoreName || merchant?.store_name || "Toko"}>
+                  🏪 {activeStoreName || merchant?.store_name || "Toko"}
                 </p>
               </div>
               

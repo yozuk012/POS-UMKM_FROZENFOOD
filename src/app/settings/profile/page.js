@@ -71,7 +71,7 @@ export default function ProfilePage() {
       section: 'More',
       icon: FiShield,
       items: [
-        { label: 'Switch Account', icon: FiRefreshCw, href: '/settings/profile/switch-account' },
+        { label: 'Switch Account', icon: FiRefreshCw, href: '/settings/profile/stores' },
         { label: 'Logout', icon: FiLogOut, href: '/auth/login', isDanger: true },
       ]
     }
