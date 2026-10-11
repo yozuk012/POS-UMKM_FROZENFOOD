@@ -17,7 +17,7 @@ export default function ReportPage() {
   });
 
   // Mengambil data dari hook
-  const { reports, operationalExpenses, loading } = useReport();
+  const { reports, operationalExpenses, availableProducts, loading } = useReport();
 
   // Logika Filtering Data berdasarkan Channel dan Tanggal
   const filteredReports = useMemo(() => {
@@ -90,7 +90,7 @@ export default function ReportPage() {
         />
 
         {/* 2. Summary Cards */}
-        <ReportSummaryCards summary={filteredSummary} />
+        <ReportSummaryCards summary={filteredSummary} availableProducts={availableProducts} />
 
         {/* 3. Table & Download Button */}
         <ReportTable reports={filteredReports} loading={loading} />

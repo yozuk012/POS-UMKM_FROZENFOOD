@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export function useChangePassword() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   // ==========================================
   // 1. STATE MANAGEMENT
@@ -18,9 +18,60 @@ export function useChangePassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [requireRelogin, setRequireRelogin] = useState(false); // Flag untuk redirect setelah sukses
 
   // ==========================================
-  // 2. FORM HANDLERS
+  // 2. PASSWORD STRENGTH INDICATOR
+  // ==========================================
+  const getPasswordStrength = (password) => {
+    if (!password) return { score: 0, label: '', color: 'gray', suggestions: [] };
+
+    let score = 0;
+    const suggestions = [];
+
+    // Panjang minimal
+    if (password.length >= 6) score += 1;
+    else suggestions.push('Minimal 6 karakter');
+
+    if (password.length >= 8) score += 1;
+    else if (password.length >= 6) suggestions.push('Lebih baik 8 karakter atau lebih');
+
+    // Huruf besar
+    if (/[A-Z]/.test(password)) score += 1;
+    else suggestions.push('Tambahkan huruf besar (A-Z)');
+
+    // Huruf kecil
+    if (/[a-z]/.test(password)) score += 1;
+    else suggestions.push('Tambahkan huruf kecil (a-z)');
+
+    // Angka
+    if (/[0-9]/.test(password)) score += 1;
+    else suggestions.push('Tambahkan angka (0-9)');
+
+    // Karakter spesial
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    else suggestions.push('Tambahkan simbol (!@#$%^&*)');
+
+    // Label berdasarkan score
+    let label, color;
+    if (score <= 2) {
+      label = 'Lemah';
+      color = 'red';
+    } else if (score <= 4) {
+      label = 'Sedang';
+      color = 'yellow';
+    } else {
+      label = 'Kuat';
+      color = 'green';
+    }
+
+    return { score, label, color, suggestions };
+  };
+
+  const passwordStrength = getPasswordStrength(formData.newPassword);
+
+  // ==========================================
+  // 3. FORM HANDLERS
   // ==========================================
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,7 +91,7 @@ export function useChangePassword() {
   };
 
   // ==========================================
-  // 3. VALIDASI
+  // 4. VALIDASI
   // ==========================================
   const validateForm = () => {
     if (!formData.currentPassword.trim()) {
@@ -58,11 +109,16 @@ export function useChangePassword() {
     if (formData.currentPassword === formData.newPassword) {
       return 'Password baru tidak boleh sama dengan password lama.';
     }
+    // Cek password terlalu sederhana (opsional)
+    const simplePasswords = ['password', '123456', 'qwerty', 'admin123'];
+    if (simplePasswords.includes(formData.newPassword.toLowerCase())) {
+      return 'Password terlalu mudah ditebak. Gunakan kombinasi yang lebih kuat.';
+    }
     return null;
   };
 
   // ==========================================
-  // 4. SUBMIT (CHANGE PASSWORD)
+  // 5. SUBMIT (CHANGE PASSWORD)
   // ==========================================
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -91,7 +147,10 @@ export function useChangePassword() {
       });
 
       if (signInError) {
-        throw new Error('Password saat ini salah. Silakan coba lagi.');
+        if (signInError.message.includes('Invalid login credentials')) {
+          throw new Error('Password saat ini salah. Silakan periksa kembali.');
+        }
+        throw new Error('Verifikasi gagal: ' + signInError.message);
       }
 
       // Step 2: Update password baru
@@ -104,8 +163,24 @@ export function useChangePassword() {
       }
 
       // Step 3: Sukses
-      setSuccessMessage('Password berhasil diubah! Silakan gunakan password baru untuk login berikutnya.');
+      setSuccessMessage(
+        '🎉 Password berhasil diubah!\n\n' +
+        'Anda akan otomatis logout untuk keamanan.\n' +
+        'Silakan login kembali menggunakan password baru Anda.'
+      );
+      setRequireRelogin(true);
       resetForm();
+
+      // Auto logout dan redirect setelah 2.5 detik
+      setTimeout(async () => {
+        try {
+          await logout();
+        } catch (err) {
+          console.warn('Logout warning:', err.message);
+          // Fallback: paksa redirect jika logout gagal
+          window.location.href = '/auth/login';
+        }
+      }, 2500);
 
     } catch (err) {
       console.error('Change password error:', err);
@@ -115,14 +190,42 @@ export function useChangePassword() {
     }
   };
 
+  // ==========================================
+  // 6. HANDLE LUPA PASSWORD LAMA
+  // ==========================================
+  // Jika user tidak ingat password lama sama sekali,
+  // arahkan ke halaman forgot-password (via PIN Recovery)
+  const handleForgotCurrentPassword = () => {
+    const confirm = window.confirm(
+      '⚠️ PERHATIAN!\n\n' +
+      'Jika Anda tidak ingat password lama, Anda akan diarahkan ke halaman Lupa Password.\n' +
+      'Anda perlu memasukkan PIN Pemulihan 6 digit yang telah dibuat saat registrasi.\n\n' +
+      'Lanjutkan?'
+    );
+
+    if (confirm) {
+      // Bisa gunakan router.push('/auth/forgot-password') di komponen
+      // Atau redirect langsung
+      window.location.href = '/auth/forgot-password';
+    }
+  };
+
   return {
+    // Form state
     formData,
     isSubmitting,
     error,
     successMessage,
+    requireRelogin,
+
+    // Password strength indicator
+    passwordStrength,
+
+    // Handlers
     handleChange,
     handleSubmit,
     resetForm,
+    handleForgotCurrentPassword,
   };
 }
 

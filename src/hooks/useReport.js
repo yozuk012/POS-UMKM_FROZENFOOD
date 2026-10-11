@@ -7,6 +7,7 @@ export default function useReport() {
   const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [operationalExpenses, setOperationalExpenses] = useState([]);
+  const [availableProducts, setAvailableProducts] = useState(0);
   const [summary, setSummary] = useState({
     totalSales: 0,
     totalHpp: 0,
@@ -35,6 +36,7 @@ export default function useReport() {
       if (!user?.id) {
         setReports([]);
         setOperationalExpenses([]);
+        setAvailableProducts(0);
         setSummary({
           totalSales: 0,
           totalHpp: 0,
@@ -61,6 +63,7 @@ export default function useReport() {
       if (!store) {
         setReports([]);
         setOperationalExpenses([]);
+        setAvailableProducts(0);
         setSummary({
           totalSales: 0,
           totalHpp: 0,
@@ -72,6 +75,15 @@ export default function useReport() {
         });
         return;
       }
+
+      const { count: productCount, error: productsError } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+        .eq('is_active', true);
+
+      if (productsError) throw productsError;
+      setAvailableProducts(productCount || 0);
 
       // Tentukan rentang tanggal (default: bulan ini)
       const { firstDay, lastDay } = getCurrentMonthRange();
@@ -205,6 +217,7 @@ export default function useReport() {
       // KETIKA SWITCH TOKO: LAPORAN KOSONG
       setReports([]);
       setOperationalExpenses([]);
+      setAvailableProducts(0);
       setSummary({
         totalSales: 0,
         totalHpp: 0,
@@ -223,6 +236,7 @@ export default function useReport() {
   return {
     reports,
     operationalExpenses,
+    availableProducts,
     summary,
     loading,
     error,

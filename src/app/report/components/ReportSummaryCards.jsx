@@ -34,11 +34,7 @@ const SummaryCard = ({ title, value, isCurrency = false, highlight = false }) =>
   );
 };
 
-export default function ReportSummaryCards({ summary }) {
-  // Data dummy untuk "Produk Tersedia" karena belum ada di hook useReport
-  // Nanti bisa diganti dengan data real dari inventory
-  const availableProducts = 15; 
-
+export default function ReportSummaryCards({ summary, availableProducts }) {
   return (
     <div className="px-4 sm:px-6 py-4 bg-gray-50/50">
       
@@ -50,7 +46,7 @@ export default function ReportSummaryCards({ summary }) {
         
         <SummaryCard title="Total Modal (HPP)" value={summary.totalHpp} isCurrency />
         <SummaryCard title="Total Transaksi" value={summary.totalTransactions || 0} /> 
-        <SummaryCard title="Produk Tersedia" value={availableProducts} />
+        <SummaryCard title="Produk Tersedia" value={availableProducts || 0} />
       </div>
 
       {/* Laba Kotor & Bersih */}
