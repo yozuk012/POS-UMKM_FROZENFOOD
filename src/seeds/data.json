@@ -1,0 +1,846 @@
+{
+  "sourceUrl": "https://gofood.co.id/banyuwangi/restaurant/abercio-frozen-food-banyuwangi-kota-ea1e0c37-75e1-44ee-9d6c-5e08b0c00a8c",
+  "scrapedAt": "2026-10-10T15:56:14.133Z",
+  "restaurant": {
+    "name": "Abercio Frozen Food, Banyuwangi Kota",
+    "address": "Perumahan Puri Brawijaya Permai, Blok MD 3, Banyuwangi Kota, Banyuwangi",
+    "rating": 4.7,
+    "totalReview": 123
+  },
+  "totalItems": 119,
+  "items": [
+    {
+      "kategori": "Orang-orang pada doyan ini",
+      "nama": "Pancake Durian Mini",
+      "catatan": "Ukuran Kecil",
+      "harga": 13000,
+      "gambar": "images/pancake_durian_mini.jpg"
+    },
+    {
+      "kategori": "Orang-orang pada doyan ini",
+      "nama": "Tahu Pentol Kukus",
+      "catatan": "Free saos mantul isi 15pc",
+      "harga": 18000,
+      "gambar": "images/tahu_pentol_kukus.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Beef Slice Mix Fat",
+      "catatan": "500gr",
+      "harga": 71500,
+      "gambar": "images/beef_slice_mix_fat.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Daging Sapi Giling Frozen",
+      "catatan": "500 gram tanpa lemak",
+      "harga": 97500,
+      "gambar": "images/daging_sapi_giling_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Kulit Body Ayam",
+      "catatan": "1kg",
+      "harga": 35000,
+      "gambar": "images/kulit_body_ayam.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Hati Ampela Ayam Frozen",
+      "catatan": "Mentah 1kg",
+      "harga": 19500,
+      "gambar": "images/hati_ampela_ayam_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Hati Ayam Nyel 1kg",
+      "catatan": "Frozen 1kg. Hati ayam aja tanpa ampela",
+      "harga": 16500,
+      "gambar": "images/hati_ayam_nyel_1kg.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Ceker Bersih 1kg Frozen",
+      "catatan": "Ceker bersih, kuku sudah dipotong",
+      "harga": 19500,
+      "gambar": "images/ceker_bersih_1kg_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Usus Ayam Bersih Frozen",
+      "catatan": "Berat 1kg",
+      "harga": 25000,
+      "gambar": "images/usus_ayam_bersih_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Beef Slice Low Fat",
+      "catatan": "500 gram",
+      "harga": 84500,
+      "gambar": "images/beef_slice_low_fat.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Ayam Slice 500 Gram",
+      "catatan": "Kemas 500gram",
+      "harga": 52000,
+      "gambar": "images/ayam_slice_500_gram.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Paha Ayam Fillet",
+      "catatan": "500 gGram",
+      "harga": 45000,
+      "gambar": "images/paha_ayam_fillet.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Kulit Ayam Leher 1kg",
+      "catatan": "Kulit ayam leher kemasan 1kg frozen",
+      "harga": 29500,
+      "gambar": "images/kulit_ayam_leher_1kg.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Sayap Ayam Frozen",
+      "catatan": "Berat 1 Kg",
+      "harga": 39000,
+      "gambar": "images/sayap_ayam_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Ceker Tanpa Tulang 500gr Frozen",
+      "catatan": "500gram",
+      "harga": 32500,
+      "gambar": "images/ceker_tanpa_tulang_500gr_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Ceker Tanpa Tulang 1kg Frozen",
+      "catatan": "Kemas 1kg",
+      "harga": 43000,
+      "gambar": "images/ceker_tanpa_tulang_1kg_frozen.jpg"
+    },
+    {
+      "kategori": "ANEKA DAGING",
+      "nama": "Tetelan Ikan Dori Frozen",
+      "catatan": "500gram Free Box. Beku",
+      "harga": 20000,
+      "gambar": "images/tetelan_ikan_dori_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Nugget Ayam Mamici Frozen",
+      "catatan": "Isi 300gram. Dalam bentuk frozen. Tinggal goreng.",
+      "harga": 25000,
+      "gambar": "images/nugget_ayam_mamici_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Siomay Ayam Mamici Frozen",
+      "catatan": "",
+      "harga": 16000,
+      "gambar": "images/siomay_ayam_mamici_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kwetiau Basah Frozen",
+      "catatan": "Kwetiau Bisa Untuk 2-3 Porsi",
+      "harga": 15000,
+      "gambar": "images/kwetiau_basah_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kulit Dimsum",
+      "catatan": "Isi 50 Lembar",
+      "harga": 16250,
+      "gambar": "images/kulit_dimsum.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kulit Lumpia Frozen",
+      "catatan": "Isi 50 Pcs",
+      "harga": 16900,
+      "gambar": "images/kulit_lumpia_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kerang Tahu Frozen",
+      "catatan": "Berat 1 Kg",
+      "harga": 16000,
+      "gambar": "images/kerang_tahu_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kerang Hijau 1Kg Frozen",
+      "catatan": "Sudah bersih tinggal masak",
+      "harga": 21000,
+      "gambar": "images/kerang_hijau_1kg_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kepiting Mix Kerang",
+      "catatan": "Free Bumbu",
+      "harga": 32500,
+      "gambar": "images/kepiting_mix_kerang.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Perkedel Kentang Frozen",
+      "catatan": "Isi 8pc",
+      "harga": 19000,
+      "gambar": "images/perkedel_kentang_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Bandeng Presto Frozen",
+      "catatan": "Isi 3pcs Besar",
+      "harga": 27500,
+      "gambar": "images/bandeng_presto_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Mendol Tempe Frozen",
+      "catatan": "Isi 10",
+      "harga": 13500,
+      "gambar": "images/mendol_tempe_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kroket Kentang Frozen",
+      "catatan": "Isi 4 jumbo",
+      "harga": 18500,
+      "gambar": "images/kroket_kentang_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Pentol Urat Mozzarela Frozen",
+      "catatan": "Isi 5pc",
+      "harga": 20000,
+      "gambar": "images/pentol_urat_mozzarela_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Dadar Jagung Frozen",
+      "catatan": "Tinggal Goreng, Berat 250 Gram",
+      "harga": 18000,
+      "gambar": "images/dadar_jagung_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Nugget Ayam Salam 250 Gram",
+      "catatan": "250gram",
+      "harga": 18200,
+      "gambar": "images/nugget_ayam_salam_250_gram.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Nugget Salam 500 Gram",
+      "catatan": "500 Gram",
+      "harga": 35100,
+      "gambar": "images/nugget_salam_500_gram.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Sosis Salam Bakar",
+      "catatan": "Isi 13 jumbo",
+      "harga": 44000,
+      "gambar": "images/sosis_salam_bakar.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Sosis Salam Mini Isi 3pc Frozen",
+      "catatan": "Kemasan 3pc",
+      "harga": 13500,
+      "gambar": "images/sosis_salam_mini_isi_3pc_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kerang Bambu Kupas Frozen",
+      "catatan": "Isi kurleb 200gram.",
+      "harga": 25000,
+      "gambar": "images/kerang_bambu_kupas_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD",
+      "nama": "Kul Sawah Bersih Frozen",
+      "catatan": "Berat 1kg",
+      "harga": 26000,
+      "gambar": "images/kul_sawah_bersih_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Tahu Aci/ Tahu Kanji Frozen",
+      "catatan": "Frozen (Isi 15) Bisa Untuk Tahu Kocek, Free Saos Sambal",
+      "harga": 17000,
+      "gambar": "images/tahu_aci_tahu_kanji_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Tahu Pentol Frozen",
+      "catatan": "Isi 15pc",
+      "harga": 19500,
+      "gambar": "images/tahu_pentol_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Tahu Cirawit Frozen",
+      "catatan": "Isi 20pc",
+      "harga": 18000,
+      "gambar": "images/tahu_cirawit_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Baso Aci Frozen",
+      "catatan": "",
+      "harga": 12000,
+      "gambar": "images/baso_aci_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Sate Pentol Aci Frozen",
+      "catatan": "Isi 20pc",
+      "harga": 19000,
+      "gambar": "images/sate_pentol_aci_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Cilok Original Frozen",
+      "catatan": "500 Gram Sekitar 40 Butir",
+      "harga": 20000,
+      "gambar": "images/cilok_original_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Cilok Isi Gajih Frozen",
+      "catatan": "Isi 500gram",
+      "harga": 23000,
+      "gambar": "images/cilok_isi_gajih_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Cilok Isi Jamur Frozen",
+      "catatan": "500gram",
+      "harga": 23000,
+      "gambar": "images/cilok_isi_jamur_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Cilok Isi Keju Frozen",
+      "catatan": "Isi 500 gram",
+      "harga": 23000,
+      "gambar": "images/cilok_isi_keju_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Cilok Tulang Rangu Frozen",
+      "catatan": "500gram",
+      "harga": 26000,
+      "gambar": "images/cilok_tulang_rangu_frozen.jpg"
+    },
+    {
+      "kategori": "CILOK, PENTOL, TAHU FROZEN",
+      "nama": "Pentol Ayam Mix Sapi",
+      "catatan": "Kemas 1kg",
+      "harga": 90000,
+      "gambar": "images/pentol_ayam_mix_sapi.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Jagung Muda Frozen",
+      "catatan": "Cocok untuk campuran masak seafood, masak sayur bening. berat 1kg",
+      "harga": 13000,
+      "gambar": "images/jagung_muda_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Roti Maryam Ori Frozen",
+      "catatan": "Isi 5pc",
+      "harga": 22000,
+      "gambar": "images/roti_maryam_ori_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Roti Maryam Coklat Frozen",
+      "catatan": "Isi 5 Pcs",
+      "harga": 23000,
+      "gambar": "images/roti_maryam_coklat_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Edamame Repack Frozen",
+      "catatan": "500 gram, tinggal diangetin atau di rebus kembali",
+      "harga": 25000,
+      "gambar": "images/edamame_repack_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Cheese Roll Frozen",
+      "catatan": "Isi 12pc",
+      "harga": 13000,
+      "gambar": "images/cheese_roll_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Kentang Repack",
+      "catatan": "200 gram",
+      "harga": 15000,
+      "gambar": "images/kentang_repack.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Kentang Homemade",
+      "catatan": "Berat 200gram, kentang asli bukan pabrikan",
+      "harga": 13000,
+      "gambar": "images/kentang_homemade.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Risoles Ayam Frozen",
+      "catatan": "Isi Wortel, Kentang, Ayam (5pc)",
+      "harga": 16000,
+      "gambar": "images/risoles_ayam_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Risoles Mayo Frozen",
+      "catatan": "Isi 5pc",
+      "harga": 19500,
+      "gambar": "images/risoles_mayo_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Risoles Coklat Frozen",
+      "catatan": "Isi 4pc, Tinggal Goreng",
+      "harga": 23000,
+      "gambar": "images/risoles_coklat_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Minipao Strawberry 30pcs Frozen",
+      "catatan": "Isi 30pc",
+      "harga": 23500,
+      "gambar": "images/minipao_strawberry_30pcs_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Singkong Keju Ngeprul Frozen",
+      "catatan": "Berat 1kg",
+      "harga": 23500,
+      "gambar": "images/singkong_keju_ngeprul_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Tela - Tela Frozen",
+      "catatan": "Siap untung di goreng (650gram)",
+      "harga": 13000,
+      "gambar": "images/tela_-_tela_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Tahu Walik Box",
+      "catatan": "Isi +- 16pc",
+      "harga": 16000,
+      "gambar": "images/tahu_walik_box.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Jagung Pipil Frozen",
+      "catatan": "Kemas 500gram",
+      "harga": 13000,
+      "gambar": "images/jagung_pipil_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Nugget Pisang Krispi Frozen",
+      "catatan": "Isi 10pc",
+      "harga": 15000,
+      "gambar": "images/nugget_pisang_krispi_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Minipao Coklat 30pc Frozen",
+      "catatan": "Isi 30pc",
+      "harga": 23500,
+      "gambar": "images/minipao_coklat_30pc_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Cireng Salju Original Frozen",
+      "catatan": "Sudah Ada Bumbunya Isi 12 (Frozen)",
+      "harga": 14500,
+      "gambar": "images/cireng_salju_original_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Cireng Ayam Suwir Frozen",
+      "catatan": "Isi 6pc",
+      "harga": 16000,
+      "gambar": "images/cireng_ayam_suwir_frozen.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Dimsum Keju Melt (Dimsum Moncrot)",
+      "catatan": "Tanpa saos isi 4",
+      "harga": 32000,
+      "gambar": "images/dimsum_keju_melt_dimsum_moncrot.jpg"
+    },
+    {
+      "kategori": "FROZEN FOOD CEMILAN/SNACK",
+      "nama": "Sempol Ayam Frozen",
+      "catatan": "Isi 25pc, sudah free saos",
+      "harga": 24000,
+      "gambar": "images/sempol_ayam_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Durian Kupas Lokal",
+      "catatan": "500 gram",
+      "harga": 44000,
+      "gambar": "images/durian_kupas_lokal.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Buah Jambu Biji Frozen",
+      "catatan": "1 pack sekitar kurleb 500gram",
+      "harga": 23000,
+      "gambar": "images/buah_jambu_biji_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Daging Sirsak Frozen",
+      "catatan": "Berat 1kg",
+      "harga": 32000,
+      "gambar": "images/daging_sirsak_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Pancake Durian Mini",
+      "catatan": "Ukuran Kecil",
+      "harga": 13000,
+      "gambar": "images/pancake_durian_mini.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Pancake Strawberry Jumbo",
+      "catatan": "Ukuran Besar",
+      "harga": 26500,
+      "gambar": "images/pancake_strawberry_jumbo.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Strawberry Frozen",
+      "catatan": "Berat kurang lebih 1 kg",
+      "harga": 26000,
+      "gambar": "images/strawberry_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Buah Alpukat Frozen",
+      "catatan": "Kurleb 500gram",
+      "harga": 40000,
+      "gambar": "images/buah_alpukat_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Daging Durian Frozen",
+      "catatan": "Berat 1kg",
+      "harga": 81500,
+      "gambar": "images/daging_durian_frozen.jpg"
+    },
+    {
+      "kategori": "BUAH FROZEN",
+      "nama": "Pancake Durian Jumbo",
+      "catatan": "Pancake premium besar",
+      "harga": 33500,
+      "gambar": "images/pancake_durian_jumbo.jpg"
+    },
+    {
+      "kategori": "Aneka Es Rasa-Rasa",
+      "nama": "Es Lilin/ Es Mambo Roti 12pc",
+      "catatan": "Isian Roti + Santan, Enak Manis Dan Segar",
+      "harga": 16000,
+      "gambar": "images/es_lilin_es_mambo_roti_12pc.jpg"
+    },
+    {
+      "kategori": "Aneka Es Rasa-Rasa",
+      "nama": "Es Lilin/ Es Mambo Mix Isi 12pc",
+      "catatan": "Varian Rasa Mix, Banyak Pilihan Rasa",
+      "harga": 16000,
+      "gambar": "images/es_lilin_es_mambo_mix_isi_12pc.jpg"
+    },
+    {
+      "kategori": "Aneka Es Rasa-Rasa",
+      "nama": "Es Mambo 7pc Panjang Mix",
+      "catatan": "Isi 7 pcs, rasa random tidak bisa milih",
+      "harga": 18000,
+      "gambar": "images/es_mambo_7pc_panjang_mix.jpg"
+    },
+    {
+      "kategori": "Aneka Es Rasa-Rasa",
+      "nama": "Es Cream Walls (700ml)",
+      "catatan": "3 rasa (coklat, vanilla, strawbery)",
+      "harga": 52000,
+      "gambar": "images/es_cream_walls_700ml.jpg"
+    },
+    {
+      "kategori": "Aneka Sambal Dan Bumbu",
+      "nama": "Bumbu Bakar Manis",
+      "catatan": "300 ml, kentall, bisa untuk daging 1kg",
+      "harga": 25000,
+      "gambar": "images/bumbu_bakar_manis.jpg"
+    },
+    {
+      "kategori": "Aneka Sambal Dan Bumbu",
+      "nama": "Sambal Pecel/ Bumbu Pecel",
+      "catatan": "250 Gram",
+      "harga": 22500,
+      "gambar": "images/sambal_pecel_bumbu_pecel.jpg"
+    },
+    {
+      "kategori": "Aneka Sambal Dan Bumbu",
+      "nama": "Bumbu Bakar Pedas",
+      "catatan": "250 gram",
+      "harga": 25000,
+      "gambar": "images/bumbu_bakar_pedas.jpg"
+    },
+    {
+      "kategori": "Aneka Sambal Dan Bumbu",
+      "nama": "Bawang Merah Iris Frozen 150gram",
+      "catatan": "Masak lebih satset tanpa harus ribet, berat sekitar 150 gram",
+      "harga": 15000,
+      "gambar": "images/bawang_merah_iris_frozen_150gram.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Nugget Goreng",
+      "catatan": "Free saos sambal (Isi 8pc)",
+      "harga": 10000,
+      "gambar": "images/nugget_goreng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Kentang Goreng",
+      "catatan": "Free Sambal",
+      "harga": 12500,
+      "gambar": "images/kentang_goreng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tela Tela Goreng",
+      "catatan": "Original / Bumbu Tabur Balado (Tulis Di Catatan Pesanan)",
+      "harga": 11000,
+      "gambar": "images/tela_tela_goreng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Siomay Ayam Goreng",
+      "catatan": "Free Saos Sambal (Isi 10pc)",
+      "harga": 10000,
+      "gambar": "images/siomay_ayam_goreng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tahu Pentol Kukus",
+      "catatan": "Free saos mantul isi 15pc",
+      "harga": 18000,
+      "gambar": "images/tahu_pentol_kukus.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tahu Aci Mateng",
+      "catatan": "Tahu aci mateng isi 15pc, free saos",
+      "harga": 16500,
+      "gambar": "images/tahu_aci_mateng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tahu Cirawit Matang",
+      "catatan": "Isi 20pc + Free Saos",
+      "harga": 18500,
+      "gambar": "images/tahu_cirawit_matang.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Aneka Bakaran Seafood",
+      "catatan": "Isi 5 Tusuk",
+      "harga": 12500,
+      "gambar": "images/aneka_bakaran_seafood.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Baso Seafood Korea Topokki Dimsum",
+      "catatan": "Isi 7pc",
+      "harga": 18000,
+      "gambar": "images/baso_seafood_korea_topokki_dimsum.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Dimsum Olahan Baso Seafood (Kukus)",
+      "catatan": "Isi 7 Pcs",
+      "harga": 18000,
+      "gambar": "images/dimsum_olahan_baso_seafood_kukus.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Pentol Bakar",
+      "catatan": "Isi 5 Tusuk",
+      "harga": 12500,
+      "gambar": "images/pentol_bakar.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Jagung Susu Keju",
+      "catatan": "Perpaduan Jagung Manis, Susu, Dan Keju",
+      "harga": 12500,
+      "gambar": "images/jagung_susu_keju.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Pentol Pedas",
+      "catatan": "Isi 10pc",
+      "harga": 12500,
+      "gambar": "images/pentol_pedas.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Baso Aci Mateng",
+      "catatan": "",
+      "harga": 13000,
+      "gambar": "images/baso_aci_mateng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Sosis Merah Goreng",
+      "catatan": "Dikasi Saos",
+      "harga": 12500,
+      "gambar": "images/sosis_merah_goreng.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tempura Mix Chili Oil",
+      "catatan": "Pakai Bumbu Chili Oil Dan Bumbu Lainnya",
+      "harga": 12500,
+      "gambar": "images/tempura_mix_chili_oil.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Sosis Bakar Jumbo",
+      "catatan": "Isi 1 tusuk jumbo",
+      "harga": 12500,
+      "gambar": "images/sosis_bakar_jumbo.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Tahu Kocek (Cigor)",
+      "catatan": "Bisa Request Cabenya",
+      "harga": 12000,
+      "gambar": "images/tahu_kocek_cigor.jpg"
+    },
+    {
+      "kategori": "MATENGAN (SIAP MAKAN)",
+      "nama": "Cireng Salju Goreng",
+      "catatan": "Free Bumbu Petis Siap Makan (Isi 12pc)",
+      "harga": 18000,
+      "gambar": "images/cireng_salju_goreng.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Air Mineral",
+      "catatan": "Dikirim random tergantung stock merk (600ml)",
+      "harga": 5000,
+      "gambar": "images/air_mineral.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Susu Sapi Murni 1 Liter",
+      "catatan": "Tinggal direbus sudah siap disajikan",
+      "harga": 32000,
+      "gambar": "images/susu_sapi_murni_1_liter.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Es Kul Kul Buah Segar",
+      "catatan": "1 porsi isi 5",
+      "harga": 13000,
+      "gambar": "images/es_kul_kul_buah_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Alpukat Segar",
+      "catatan": "Perpaduan Buah Alpukat + Susu Kental Manis",
+      "harga": 15000,
+      "gambar": "images/jus_alpukat_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Melon Segar",
+      "catatan": "Bisa Request Pakai Susu Atau Tanpa Susu",
+      "harga": 13000,
+      "gambar": "images/jus_melon_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Buah Naga Segar",
+      "catatan": "Perpaduan Buah Naga + Susu Kental Manis",
+      "harga": 13000,
+      "gambar": "images/jus_buah_naga_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Semangka Segar",
+      "catatan": "Bisa Request Pakai Susu Atau Tanpa Susu",
+      "harga": 13000,
+      "gambar": "images/jus_semangka_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Strawberry Segar",
+      "catatan": "Perpaduan Buah Strawberry + Susu Kental Manis",
+      "harga": 15000,
+      "gambar": "images/jus_strawberry_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Jambu Merah Segar",
+      "catatan": "Perpaduan Buah Jambu Dengan Susu Kental Manis",
+      "harga": 13000,
+      "gambar": "images/jus_jambu_merah_segar.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Jus Mix Berry",
+      "catatan": "strawberry mix blackberry adalah minuman sehat kaya antioksidan dengan perpaduan rasa asam manis yang segar. Kombinasi buah ini sangat populer untuk menjaga daya tahan tubuh",
+      "harga": 22500,
+      "gambar": "images/jus_mix_berry.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Es Teh Jumbo",
+      "catatan": "",
+      "harga": 5000,
+      "gambar": "images/es_teh_jumbo.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Es Milo",
+      "catatan": "",
+      "harga": 10000,
+      "gambar": "images/es_milo.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Es Cappucino GoodDay",
+      "catatan": "",
+      "harga": 10000,
+      "gambar": "images/es_cappucino_goodday.jpg"
+    },
+    {
+      "kategori": "Minuman / Jus Buah",
+      "nama": "Es Capcin (Cappucino Cincau)",
+      "catatan": "",
+      "harga": 8000,
+      "gambar": "images/es_capcin_cappucino_cincau.jpg"
+    }
+  ]
+}

@@ -9,14 +9,17 @@ import {
   FiRefreshCw, 
   FiLogOut,
   FiShield,
+  FiDatabase,
   FiLoader
 } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useActiveStore } from '@/lib/activeStore';
 import PageLayout from '../../../components/PageLayout'; // Path sesuai kode teman Anda
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { storeId } = useActiveStore();
   
   // 1. STATE UNTUK DATA REAL (Menggantikan hardcoded)
   const [businessName, setBusinessName] = useState('Memuat...');
@@ -24,7 +27,7 @@ export default function ProfilePage() {
   const [logoUrl, setLogoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. FETCH DATA PROFIL SAAT KOMPONEN MOUNT
+  // 2. FETCH DATA PROFIL DAN TOKO AKTIF
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -35,17 +38,29 @@ export default function ProfilePage() {
           return;
         }
 
-        // Ambil data dari tabel merchants
-        const { data, error } = await supabase
-          .from('merchants')
-          .select('full_name, store_name, store_logo_url')
-          .eq('id', user.id)
-          .single();
+        const [{ data: merchant, error: merchantError }, { data: store, error: storeError }] = await Promise.all([
+          supabase
+            .from('merchants')
+            .select('full_name, store_name, store_logo_url')
+            .eq('id', user.id)
+            .single(),
+          storeId
+            ? supabase
+                .from('stores')
+                .select('name, logo_url')
+                .eq('id', storeId)
+                .eq('user_id', user.id)
+                .maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+        ]);
 
-        if (data && !error) {
-          setBusinessName(data.store_name || 'Nama Toko');
-          setUserName(data.full_name || 'Pengguna');
-          setLogoUrl(data.store_logo_url);
+        if (merchantError) throw merchantError;
+        if (storeError) throw storeError;
+
+        if (merchant) {
+          setUserName(merchant.full_name || 'Pengguna');
+          setBusinessName(store?.name || merchant.store_name || 'Nama Toko');
+          setLogoUrl(store?.logo_url || merchant.store_logo_url || null);
         }
       } catch (err) {
         console.error('Gagal memuat profil:', err);
@@ -55,7 +70,7 @@ export default function ProfilePage() {
     }
 
     fetchProfile();
-  }, [router]);
+  }, [router, storeId]);
 
   const menuItems = [
     {
@@ -63,8 +78,8 @@ export default function ProfilePage() {
       icon: FiUser,
       items: [
         { label: 'Edit Profile', icon: FiEdit, href: '/settings/profile/edit-profile' },
-        { label: 'Change Password', icon: FiLock, href: '/settings/profile/Change-Password' },
-        { label: 'Persentase Online', icon: FiPercent, href: '/settings/profile/Persentase-Online' },
+        { label: 'Change Password', icon: FiLock, href: '/settings/profile/change-password' },
+        { label: 'Persentase Online', icon: FiPercent, href: '/settings/profile/persentase-online' },
       ]
     },
     {
@@ -72,6 +87,8 @@ export default function ProfilePage() {
       icon: FiShield,
       items: [
         { label: 'Switch Account', icon: FiRefreshCw, href: '/settings/profile/stores' },
+        { label: 'Export Data', icon: FiShield, href: '/settings/profile/export-data' },
+        { label: 'Seed Data Produk', icon: FiDatabase, href: '/settings/profile/seed-data' },
         { label: 'Logout', icon: FiLogOut, href: '/auth/login', isDanger: true },
       ]
     }

@@ -1,6 +1,6 @@
 Berikut adalah versi **`DATABASE.md`** yang telah disesuaikan dan diperbarui berdasarkan skema SQL terbaru. 
 
-Perubahan utama pada versi ini adalah **penambahan kolom rekening bank** pada tabel `stores`, **penambahan kolom catatan & total yield** pada tabel `recipes`, serta **penghapusan tabel `waste_logs` dan `conversions`** karena tidak ada di dalam skema SQL terbaru.
+Perubahan utama pada versi ini adalah **penambahan kolom rekening bank** pada tabel `stores`, **penambahan kolom catatan & total yield** pada tabel `recipes`, **penambahan kolom `import_summary` dan `error_log_url`** pada tabel `backups` untuk mendukung fitur Impor Data, serta **penghapusan tabel `waste_logs` dan `conversions`** karena tidak ada di dalam skema SQL terbaru.
 
 ---
 
@@ -24,7 +24,7 @@ Dokumen ini berisi spesifikasi tabel, kolom, tipe data, serta penjelasan fungsi 
 - **`sale_items`**: Rincian Barang Penjualan
 - **`inventory`**: Stok Fisik Gudang & Toko
 - **`operational_expenses`**: Biaya Operasional Toko
-- **`backups`**: Riwayat & Log Ekspor Data
+- **`backups`**: Riwayat & Log Ekspor/Impor Data
 
 ---
 
@@ -192,20 +192,43 @@ Pencatatan stok riil fisik (produk jadi maupun bahan baku).
 ---
 
 ### 12. 💾 `backups`
-Pencatatan riwayat ekspor dan pengarsipan data.
+Pencatatan riwayat ekspor **dan impor** data, termasuk ringkasan hasil impor serta tautan file log error.
 
 - **`id`** (`int8` - PK): ID unik backup.
 - **`store_id`** (`int8` - FK): Merujuk ke `stores.id`.
 - **`user_id`** (`uuid` - FK): Merujuk ke `merchants.id`.
-- **`backup_type`** (`varchar`): Jenis data yang diekspor.
-- **`file_url`** (`varchar`): Tautan/Link unduh file backup.
+- **`backup_type`** (`varchar`): Jenis data yang diproses (`EXPORT_*` untuk ekspor, `IMPORT_*` untuk impor, mis. `IMPORT_MASTER_DATA`).
+- **`file_url`** (`varchar`): Tautan/Link unduh file backup (atau arsip file impor).
 - **`file_size_kb`** (`int4`): Ukuran berkas (dalam KB).
 - **`file_format`** (`varchar`): Format berkas (`xlsx`, `csv`, `pdf`).
 - **`date_from`** (`date`): Batas awal periode data.
 - **`date_to`** (`date`): Batas akhir periode data.
-- **`status`** (`varchar`): Status ekspor (`pending`, `completed`, dll.).
-- **`completed_at`** (`timestamptz`): Tanggal & waktu penyelesaian ekspor.
-- **`created_at`** (`timestamptz`): Tanggal pembuatan permintaan ekspor.
+- **`status`** (`varchar`): Status proses (`pending`, `processing`, `completed`, `completed_with_errors`, `failed`).
+- **`completed_at`** (`timestamptz`): Tanggal & waktu penyelesaian proses.
+- **`created_at`** (`timestamptz`): Tanggal pembuatan permintaan.
+- **`import_summary`** (`jsonb` - Opsional): Menyimpan JSON hasil import, contoh: `{"success": 97, "failed": 3, "skipped": 0}`.
+- **`error_log_url`** (`varchar` - Opsional): Link file Excel berisi baris data yang gagal diimpor beserta alasan errornya.
+
+**Catatan kolom impor:**
+
+- `import_summary` hanya terisi pada baris dengan `backup_type` berawalan `IMPORT_` (bernilai `NULL` untuk ekspor). Nilai yang dipakai aplikasi saat ini: `success`, `failed`, dan `total`.
+- `error_log_url` hanya terisi jika ada baris yang gagal (`status = 'completed_with_errors'`). Bila semua baris sukses, kolom ini `NULL` dan `file_url` menunjuk ke arsip file asli yang diunggah pengguna.
+
+**SQL Migrasi (menambahkan kolom untuk fitur Impor Data):**
+
+```sql
+-- Menambahkan kolom untuk fitur Impor Data pada tabel backups
+ALTER TABLE backups
+-- 1. Kolom untuk menyimpan ringkasan hasil import (JSON)
+ADD COLUMN IF NOT EXISTS import_summary jsonb,
+
+-- 2. Kolom untuk menyimpan link file log error (jika ada baris yang gagal diimpor)
+ADD COLUMN IF NOT EXISTS error_log_url varchar;
+
+-- (Opsional) Memberikan deskripsi pada kolom agar mudah diingat di Table Editor
+COMMENT ON COLUMN backups.import_summary IS 'Menyimpan JSON hasil import, contoh: {"success": 97, "failed": 3, "skipped": 0}';
+COMMENT ON COLUMN backups.error_log_url IS 'Link file Excel berisi baris data yang gagal diimpor beserta alasan errornya';
+```
 
 ---
 

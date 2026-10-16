@@ -30,6 +30,7 @@ export default function CopyDataModal({ isOpen, onClose, type, title, onCopySucc
   const [items, setItems] = useState([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState([]);
 
   // State proses copy
@@ -43,6 +44,7 @@ export default function CopyDataModal({ isOpen, onClose, type, title, onCopySucc
     const fetchUserStores = async () => {
       setSelectedIds([]);
       setSearchQuery('');
+      setCategoryFilter('all');
       setStatusMessage(null);
       try {
         const { data, error } = await supabase
@@ -106,12 +108,23 @@ export default function CopyDataModal({ isOpen, onClose, type, title, onCopySucc
 
   // 3. Filter items berdasarkan search
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items;
+    const categoryItems = type === 'products' && categoryFilter !== 'all'
+      ? items.filter((item) => item.categoryName === categoryFilter)
+      : items;
+
+    if (!searchQuery.trim()) return categoryItems;
     const q = searchQuery.toLowerCase();
-    return items.filter((item) =>
+    return categoryItems.filter((item) =>
       item.name.toLowerCase().includes(q) || (item.subtitle && item.subtitle.toLowerCase().includes(q))
     );
-  }, [items, searchQuery]);
+  }, [items, searchQuery, type, categoryFilter]);
+
+  const productCategories = useMemo(() => {
+    if (type !== 'products') return [];
+    return [...new Set(items.map((item) => item.categoryName || 'Tanpa Kategori'))].sort((a, b) =>
+      a.localeCompare(b, 'id')
+    );
+  }, [items, type]);
 
   // 4. Handler Seleksi (Single & Multi-Select)
   const toggleSelect = (id) => {
@@ -306,6 +319,21 @@ export default function CopyDataModal({ isOpen, onClose, type, title, onCopySucc
                     className="w-full pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                   />
                 </div>
+
+                {type === 'products' && (
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    disabled={isLoadingItems || items.length === 0}
+                    aria-label="Filter kategori produk"
+                    className="w-full sm:w-52 px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  >
+                    <option value="all">Semua kategori</option>
+                    {productCategories.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                )}
 
                 {/* Tombol Pilih Semua */}
                 {items.length > 0 && (

@@ -89,22 +89,36 @@ export function useProducts() {
       setCategories([]);
       setProducts([]);
       setTotalItems(0);
+      setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from('stores')
-      .select('id, name')
-      .eq('user_id', user.id)
-      .eq('is_active', true);
-    
-    if (data && data.length > 0) {
-      const activeStore = resolveActiveStore(data);
-      setStores(activeStore ? [activeStore] : []);
-    } else {
+    try {
+      const { data, error: storesError } = await supabase
+        .from('stores')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (storesError) throw storesError;
+
+      if (data && data.length > 0) {
+        const activeStore = resolveActiveStore(data);
+        setStores(activeStore ? [activeStore] : []);
+      } else {
+        setStores([]);
+        setCategories([]);
+        setProducts([]);
+        setTotalItems(0);
+      }
+    } catch (storesError) {
+      console.error('Fetch stores error:', storesError);
+      setError(`Gagal memuat toko: ${storesError.message}`);
       setStores([]);
       setCategories([]);
       setProducts([]);
       setTotalItems(0);
+    } finally {
+      setLoading(false);
     }
   }, [user?.id]);
 
@@ -114,7 +128,18 @@ export function useProducts() {
       return;
     }
     const storeIds = stores.map(s => s.id);
-    const { data } = await supabase.from('categories').select('id, name, store_id').in('store_id', storeIds);
+    const { data, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id, name, store_id')
+      .in('store_id', storeIds);
+
+    if (categoriesError) {
+      console.error('Fetch categories error:', categoriesError);
+      setError(`Gagal memuat kategori: ${categoriesError.message}`);
+      setCategories([]);
+      return;
+    }
+
     setCategories(data || []);
   }, [user?.id, stores]);
 
@@ -184,6 +209,8 @@ export function useProducts() {
 
     if (error) {
       console.error('Fetch products error:', error);
+      setError(`Gagal memuat produk: ${error.message}`);
+      setProducts([]);
       setTotalItems(0);
     } else {
       const mappedProducts = (data || []).map(p => {
@@ -212,7 +239,15 @@ export function useProducts() {
   }, [searchQuery, filterCategory, filterChannel, filterStatus]);
 
   useEffect(() => { 
-    if (user?.id) fetchStores(); 
+    if (user?.id) {
+      fetchStores();
+    } else {
+      setStores([]);
+      setCategories([]);
+      setProducts([]);
+      setTotalItems(0);
+      setLoading(false);
+    }
     const handleStoreChange = () => {
       // Ketika switch toko: produk kosong, kategori kosong, reset filter
       setProducts([]);

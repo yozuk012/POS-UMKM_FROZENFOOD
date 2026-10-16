@@ -63,6 +63,7 @@ export async function fetchItemsForCopy(type, storeId) {
         return {
           id: item.id,
           name: item.name,
+          categoryName: item.categories?.name || 'Tanpa Kategori',
           subtitle: `Kategori: ${item.categories?.name || '-'} | Harga: Rp ${Number(item.base_price || 0).toLocaleString('id-ID')}`,
           hasRecipe,
           recipeBadge: hasRecipe ? `Resep (${ingredientCount} Bahan)` : 'Tanpa Resep',
