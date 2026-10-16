@@ -262,7 +262,7 @@ export default function PersentaseOnlinePage() {
                 <div className="bg-yellow-50 border-b border-yellow-200 px-5 py-3">
                   <p className="text-xs text-yellow-800 leading-relaxed">
                     <strong>⚠️ Perhatian:</strong> Ini hanya preview. Harga belum diubah. 
-                    Klik "Terapkan ke Semua Produk" untuk menyimpan perubahan.
+                    Klik &quot;Terapkan ke Semua Produk&quot; untuk menyimpan perubahan.
                   </p>
                 </div>
 
