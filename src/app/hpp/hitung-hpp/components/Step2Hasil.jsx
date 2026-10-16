@@ -5,13 +5,17 @@ import { getRecommendedPrice } from '@/lib/productUtils';
 
 export default function Step2Hasil({
   namaProduk,
+  modeInput,
   jumlahProduk,
   totalHppBahanBaku,
   isSubmitting,
   onSubmit,
   onBack
 }) {
-  // 1. Kalkulasi HPP Bahan Baku Per Unit
+  // Mode input: 'detail' (bahan baku 1 per 1) atau 'cepat' (akumulasi modal)
+  const isModeCepat = modeInput === 'cepat';
+
+  // 1. Kalkulasi HPP Bahan Baku Per Unit -> Rumus: Total Modal : Jumlah yang Dihasilkan
   const qty = parseFloat(jumlahProduk) || 1;
   const hppPerUnit = totalHppBahanBaku / qty;
 
@@ -51,9 +55,10 @@ export default function Step2Hasil({
   const handleSubmit = () => {
     const confirmMsg = `Anda akan menyimpan:\n\n` +
       `• Produk: ${namaProduk}\n` +
-      `• HPP Bahan Baku: ${formatRupiah(hppPerUnit)} / ${qty} unit\n` +
-      `• Total Modal Bahan: ${formatRupiah(totalHppBahanBaku)}\n\n` +
-      `Catatan: Jangan lupa catat biaya operasional (gas, listrik, dll) di halaman Pengeluaran agar laporan laba rugi akurat.\n\n` +
+      `• ${isModeCepat ? 'HPP (mode cepat)' : 'HPP Bahan Baku'}: ${formatRupiah(hppPerUnit)} / ${qty} unit\n` +
+      `• ${isModeCepat ? 'Total Modal (Akumulasi)' : 'Total Modal Bahan'}: ${formatRupiah(totalHppBahanBaku)}\n` +
+      (isModeCepat ? `• Mode: Cepat (akumulasi modal) - rincian bahan & stok bahan tidak dicatat\n` : '') +
+      `\nCatatan: Jangan lupa catat biaya operasional (gas, listrik, dll) di halaman Pengeluaran agar laporan laba rugi akurat.\n\n` +
       `Lanjutkan penyimpanan?`;
       
     if (window.confirm(confirmMsg)) {
@@ -66,17 +71,28 @@ export default function Step2Hasil({
       
       {/* 1. Ringkasan Perhitungan HPP */}
       <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-5 border border-gray-100">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <FiCheckCircle className="text-blue-600" />
-          Rincian HPP: {namaProduk || 'Produk Baru'}
-        </h3>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <FiCheckCircle className="text-blue-600" />
+            Rincian HPP: {namaProduk || 'Produk Baru'}
+          </h3>
+          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border whitespace-nowrap ${
+            isModeCepat
+              ? 'bg-purple-50 text-purple-700 border-purple-200'
+              : 'bg-blue-50 text-blue-700 border-blue-200'
+          }`}>
+            {isModeCepat ? 'Mode Cepat' : 'Input 1 Per 1'}
+          </span>
+        </div>
         
         <div className="space-y-4">
           {/* Breakdown Batch */}
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Modal 1 Batch</p>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600 text-sm">Total Biaya Bahan Baku:</span>
+              <span className="text-gray-600 text-sm">
+                {isModeCepat ? 'Total Modal (Akumulasi):' : 'Total Biaya Bahan Baku:'}
+              </span>
               <span className="font-bold text-gray-800 text-lg">{formatRupiah(totalHppBahanBaku)}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-200">
@@ -85,11 +101,29 @@ export default function Step2Hasil({
             </div>
           </div>
 
+          {/* Info khusus Mode Cepat (Akumulasi) */}
+          {isModeCepat && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex gap-3">
+              <FiInfo className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-purple-800 mb-1">Mode Cepat (Akumulasi)</p>
+                <p className="text-xs text-purple-700 leading-relaxed">
+                  HPP dihitung dengan rumus <strong>Total Modal : Jumlah yang Dihasilkan</strong>.
+                  Rincian bahan baku tidak disimpan dan stok bahan baku tidak dipotong otomatis.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* HPP PER UNIT Highlight */}
           <div className="flex justify-between items-center py-4 bg-blue-50 rounded-xl px-5 border border-blue-200">
             <div className="flex flex-col">
-              <span className="text-blue-800 font-bold text-lg">HPP BAHAN / Unit</span>
-              <span className="text-xs text-blue-600 font-medium">Modal murni bahan baku</span>
+              <span className="text-blue-800 font-bold text-lg">{isModeCepat ? 'HPP / Unit' : 'HPP BAHAN / Unit'}</span>
+              <span className="text-xs text-blue-600 font-medium">
+                {isModeCepat
+                  ? `${formatRupiah(totalHppBahanBaku)} : ${qty} unit`
+                  : 'Modal murni bahan baku'}
+              </span>
             </div>
             <span className="font-bold text-3xl text-blue-700">{formatRupiah(hppPerUnit)}</span>
           </div>

@@ -124,7 +124,7 @@ export function useSeedData() {
   const uploadSeedImage = useCallback(async (item) => {
     if (!item.image_local_url) throw new Error('file gambar tidak tersedia');
 
-    // Gambar dibaca dari public/seeds/images (salinan dari src/seeds/images)
+    // Gambar dibaca dari src/seeds/images melalui route API internal.
     const response = await fetch(item.image_local_url);
     if (!response.ok) {
       throw new Error(`file ${item.image_local_url} tidak ditemukan (HTTP ${response.status})`);

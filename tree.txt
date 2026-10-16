@@ -2,127 +2,12 @@ my-pos
 ├── anti-slop
 │   └── audit-001-2026-10-02.md
 ├── public
-│   └── seeds
-│       └── images
-│           ├── air_mineral.jpg
-│           ├── aneka_bakaran_seafood.jpg
-│           ├── ayam_slice_500_gram.jpg
-│           ├── bandeng_presto_frozen.jpg
-│           ├── baso_aci_frozen.jpg
-│           ├── baso_aci_mateng.jpg
-│           ├── baso_seafood_korea_topokki_dimsum.jpg
-│           ├── bawang_merah_iris_frozen_150gram.jpg
-│           ├── beef_slice_low_fat.jpg
-│           ├── beef_slice_mix_fat.jpg
-│           ├── buah_alpukat_frozen.jpg
-│           ├── buah_jambu_biji_frozen.jpg
-│           ├── bumbu_bakar_manis.jpg
-│           ├── bumbu_bakar_pedas.jpg
-│           ├── ceker_bersih_1kg_frozen.jpg
-│           ├── ceker_tanpa_tulang_1kg_frozen.jpg
-│           ├── ceker_tanpa_tulang_500gr_frozen.jpg
-│           ├── cheese_roll_frozen.jpg
-│           ├── cilok_isi_gajih_frozen.jpg
-│           ├── cilok_isi_jamur_frozen.jpg
-│           ├── cilok_isi_keju_frozen.jpg
-│           ├── cilok_original_frozen.jpg
-│           ├── cilok_tulang_rangu_frozen.jpg
-│           ├── cireng_ayam_suwir_frozen.jpg
-│           ├── cireng_salju_goreng.jpg
-│           ├── cireng_salju_original_frozen.jpg
-│           ├── dadar_jagung_frozen.jpg
-│           ├── daging_durian_frozen.jpg
-│           ├── daging_sapi_giling_frozen.jpg
-│           ├── daging_sirsak_frozen.jpg
-│           ├── dimsum_keju_melt_dimsum_moncrot.jpg
-│           ├── dimsum_olahan_baso_seafood_kukus.jpg
-│           ├── durian_kupas_lokal.jpg
-│           ├── edamame_repack_frozen.jpg
-│           ├── es_capcin_cappucino_cincau.jpg
-│           ├── es_cappucino_goodday.jpg
-│           ├── es_cream_walls_700ml.jpg
-│           ├── es_kul_kul_buah_segar.jpg
-│           ├── es_lilin_es_mambo_mix_isi_12pc.jpg
-│           ├── es_lilin_es_mambo_roti_12pc.jpg
-│           ├── es_mambo_7pc_panjang_mix.jpg
-│           ├── es_milo.jpg
-│           ├── es_teh_jumbo.jpg
-│           ├── hati_ampela_ayam_frozen.jpg
-│           ├── hati_ayam_nyel_1kg.jpg
-│           ├── jagung_muda_frozen.jpg
-│           ├── jagung_pipil_frozen.jpg
-│           ├── jagung_susu_keju.jpg
-│           ├── jus_alpukat_segar.jpg
-│           ├── jus_buah_naga_segar.jpg
-│           ├── jus_jambu_merah_segar.jpg
-│           ├── jus_melon_segar.jpg
-│           ├── jus_mix_berry.jpg
-│           ├── jus_semangka_segar.jpg
-│           ├── jus_strawberry_segar.jpg
-│           ├── kentang_goreng.jpg
-│           ├── kentang_homemade.jpg
-│           ├── kentang_repack.jpg
-│           ├── kepiting_mix_kerang.jpg
-│           ├── kerang_bambu_kupas_frozen.jpg
-│           ├── kerang_hijau_1kg_frozen.jpg
-│           ├── kerang_tahu_frozen.jpg
-│           ├── kroket_kentang_frozen.jpg
-│           ├── kul_sawah_bersih_frozen.jpg
-│           ├── kulit_ayam_leher_1kg.jpg
-│           ├── kulit_body_ayam.jpg
-│           ├── kulit_dimsum.jpg
-│           ├── kulit_lumpia_frozen.jpg
-│           ├── kwetiau_basah_frozen.jpg
-│           ├── mendol_tempe_frozen.jpg
-│           ├── minipao_coklat_30pc_frozen.jpg
-│           ├── minipao_strawberry_30pcs_frozen.jpg
-│           ├── nugget_ayam_mamici_frozen.jpg
-│           ├── nugget_ayam_salam_250_gram.jpg
-│           ├── nugget_goreng.jpg
-│           ├── nugget_pisang_krispi_frozen.jpg
-│           ├── nugget_salam_500_gram.jpg
-│           ├── paha_ayam_fillet.jpg
-│           ├── pancake_durian_jumbo.jpg
-│           ├── pancake_durian_mini.jpg
-│           ├── pancake_strawberry_jumbo.jpg
-│           ├── pentol_ayam_mix_sapi.jpg
-│           ├── pentol_bakar.jpg
-│           ├── pentol_pedas.jpg
-│           ├── pentol_urat_mozzarela_frozen.jpg
-│           ├── perkedel_kentang_frozen.jpg
-│           ├── risoles_ayam_frozen.jpg
-│           ├── risoles_coklat_frozen.jpg
-│           ├── risoles_mayo_frozen.jpg
-│           ├── roti_maryam_coklat_frozen.jpg
-│           ├── roti_maryam_ori_frozen.jpg
-│           ├── sambal_pecel_bumbu_pecel.jpg
-│           ├── sate_pentol_aci_frozen.jpg
-│           ├── sayap_ayam_frozen.jpg
-│           ├── sempol_ayam_frozen.jpg
-│           ├── singkong_keju_ngeprul_frozen.jpg
-│           ├── siomay_ayam_goreng.jpg
-│           ├── siomay_ayam_mamici_frozen.jpg
-│           ├── sosis_bakar_jumbo.jpg
-│           ├── sosis_merah_goreng.jpg
-│           ├── sosis_salam_bakar.jpg
-│           ├── sosis_salam_mini_isi_3pc_frozen.jpg
-│           ├── strawberry_frozen.jpg
-│           ├── susu_sapi_murni_1_liter.jpg
-│           ├── tahu_aci_mateng.jpg
-│           ├── tahu_aci_tahu_kanji_frozen.jpg
-│           ├── tahu_cirawit_frozen.jpg
-│           ├── tahu_cirawit_matang.jpg
-│           ├── tahu_kocek_cigor.jpg
-│           ├── tahu_pentol_frozen.jpg
-│           ├── tahu_pentol_kukus.jpg
-│           ├── tahu_walik_box.jpg
-│           ├── tela_-_tela_frozen.jpg
-│           ├── tela_tela_goreng.jpg
-│           ├── tempura_mix_chili_oil.jpg
-│           ├── tetelan_ikan_dori_frozen.jpg
-│           └── usus_ayam_bersih_frozen.jpg
 ├── src
 │   ├── app
+│   │   ├── api
+│   │   │   └── seed-images
+│   │   │       └── [filename]
+│   │   │           └── route.js
 │   │   ├── auth
 │   │   │   ├── forgot-password
 │   │   │   │   └── page.js
@@ -153,6 +38,7 @@ my-pos
 │   │   ├── hpp
 │   │   │   ├── hitung-hpp
 │   │   │   │   ├── components
+│   │   │   │   │   ├── ModeSwitcher.jsx
 │   │   │   │   │   ├── Step1BahanBaku.jsx
 │   │   │   │   │   ├── Step2Hasil.jsx
 │   │   │   │   │   └── StepIndicator.jsx
@@ -226,6 +112,7 @@ my-pos
 │   │   │   ├── components
 │   │   │   │   ├── ReceiptModal.jsx
 │   │   │   │   ├── TransactionFilters.jsx
+│   │   │   │   ├── TransactionItemDiscount.jsx
 │   │   │   │   ├── TransactionOrderSummary.jsx
 │   │   │   │   ├── TransactionPaymentModal.jsx
 │   │   │   │   └── TransactionProductGrid.jsx

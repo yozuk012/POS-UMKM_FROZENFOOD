@@ -93,11 +93,17 @@ export default function TransactionPage() {
             removeItem={transaction.removeItem}
             clearCart={transaction.clearCart}
             subtotal={transaction.subtotal}
+            subtotalBeforeDiscount={transaction.subtotalBeforeDiscount}
+            itemDiscountTotal={transaction.itemDiscountTotal}
             grandTotal={transaction.grandTotal}
             customerName={transaction.customerName}
             setCustomerName={transaction.setCustomerName}
             onCheckout={transaction.handleCheckout}
             channel={transaction.channel} 
+            isMainBranch={transaction.isMainBranch}
+            storeName={transaction.storeName}
+            applyItemDiscount={transaction.applyItemDiscount}
+            clearItemDiscount={transaction.clearItemDiscount}
           />
         </div>
       </div>

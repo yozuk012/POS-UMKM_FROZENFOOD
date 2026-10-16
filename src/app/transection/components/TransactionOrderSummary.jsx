@@ -1,5 +1,7 @@
 // src/app/transection/components/TransactionOrderSummary.jsx
-import { FiShoppingCart, FiX, FiCreditCard } from 'react-icons/fi';
+import { FiShoppingCart, FiX, FiCreditCard, FiLock, FiZap } from 'react-icons/fi';
+import TransactionItemDiscount from './TransactionItemDiscount';
+import { formatRupiah } from '@/lib/productUtils';
 
 export default function TransactionOrderSummary({ 
   cartItems, 
@@ -7,20 +9,17 @@ export default function TransactionOrderSummary({
   removeItem, 
   clearCart,
   subtotal,
-  grandTotal, // Langsung menggunakan grandTotal dari hook (yang sudah memperhitungkan diskon produk)
+  subtotalBeforeDiscount,
+  itemDiscountTotal,
+  grandTotal, // Langsung menggunakan grandTotal dari hook (sudah termasuk diskon produk & Diskon Cepat)
   customerName,
   setCustomerName,
-  onCheckout 
+  onCheckout,
+  isMainBranch = false,
+  storeName = '',
+  applyItemDiscount,
+  clearItemDiscount,
 }) {
-  // Helper format Rupiah
-  const formatRupiah = (number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(number);
-  };
 
   return (
     <div className="w-full md:w-[400px] bg-white flex flex-col h-full border-l border-gray-200">
@@ -44,6 +43,22 @@ export default function TransactionOrderSummary({
           )}
         </div>
         
+        {/* Status cabang: Diskon Cepat (nominal Rp) hanya untuk Cabang Utama */}
+        <div className={`mb-3 flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium ${
+          isMainBranch
+            ? 'border-green-100 bg-green-50 text-green-700'
+            : 'border-gray-200 bg-gray-50 text-gray-500'
+        }`}>
+          {isMainBranch
+            ? <FiZap className="h-3.5 w-3.5 shrink-0" />
+            : <FiLock className="h-3.5 w-3.5 shrink-0" />}
+          <span className="truncate">
+            {isMainBranch
+              ? `Diskon Cepat aktif di ${storeName || 'Cabang Utama'}`
+              : 'Diskon Cepat hanya tersedia di Cabang Utama'}
+          </span>
+        </div>
+
         {/* Input Nama Customer */}
         <div className="relative">
           <input
@@ -67,7 +82,11 @@ export default function TransactionOrderSummary({
             <p className="text-xs text-gray-400 mt-1">Klik produk di sebelah kiri untuk menambahkan</p>
           </div>
         ) : (
-          cartItems.map((item) => (
+          cartItems.map((item) => {
+            const quickDiscount = Number(item.quick_discount) || 0;
+            const normalUnitPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
+
+            return (
             <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-blue-200 transition-colors">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 pr-2">
@@ -75,11 +94,23 @@ export default function TransactionOrderSummary({
                     {item.name}
                   </h4>
                   <p className="text-xs text-gray-500 mt-1">
-                    {item.sku} • {formatRupiah(item.unit_price)}/{item.unit}
-                    {/* Tampilkan badge diskon jika ada */}
+                    {item.sku} •{' '}
+                    {quickDiscount > 0 && (
+                      <span className="mr-1 text-gray-400 line-through">
+                        {formatRupiah(normalUnitPrice)}
+                      </span>
+                    )}
+                    {formatRupiah(item.unit_price)}/{item.unit}
+                    {/* Tampilkan badge diskon persen produk jika ada */}
                     {item.discount_pct > 0 && (
                       <span className="ml-1 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">
                         -{item.discount_pct}%
+                      </span>
+                    )}
+                    {/* Badge Diskon Cepat (nominal Rp) */}
+                    {quickDiscount > 0 && (
+                      <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold">
+                        -{formatRupiah(quickDiscount)}/pcs
                       </span>
                     )}
                   </p>
@@ -114,18 +145,55 @@ export default function TransactionOrderSummary({
                 </div>
                 
                 {/* Harga Total Item */}
-                <p className="text-sm font-bold text-blue-600">
-                  {formatRupiah(item.unit_price * item.qty)}
-                </p>
+                <div className="text-right">
+                  {quickDiscount > 0 && (
+                    <p className="text-[11px] text-gray-400 line-through">
+                      {formatRupiah(normalUnitPrice * item.qty)}
+                    </p>
+                  )}
+                  <p className="text-sm font-bold text-blue-600">
+                    {formatRupiah(item.unit_price * item.qty)}
+                  </p>
+                </div>
               </div>
+
+              {/* Diskon Cepat (nominal Rp) — hanya tersedia di cabang utama */}
+              {isMainBranch && (
+                <TransactionItemDiscount
+                  item={item}
+                  onApply={(discount) => applyItemDiscount(item.id, discount)}
+                  onClear={() => clearItemDiscount(item.id)}
+                />
+              )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
       {/* 3. Footer: Total & Tombol Bayar (Tidak akan mengecil/shrink) */}
       <div className="border-t border-gray-200 p-4 bg-gray-50 space-y-4 shrink-0">
         
+        {/* Rincian: Subtotal harga normal -> Diskon Cepat -> Total */}
+        <div className="space-y-1.5 text-sm">
+          <div className="flex justify-between text-gray-600">
+            <span>Subtotal</span>
+            <span className="font-medium">{formatRupiah(subtotalBeforeDiscount)}</span>
+          </div>
+          {itemDiscountTotal > 0 && (
+            <div className="flex justify-between font-medium text-red-600">
+              <span>Diskon Cepat</span>
+              <span>-{formatRupiah(itemDiscountTotal)}</span>
+            </div>
+          )}
+          {itemDiscountTotal > 0 && (
+            <div className="flex items-center justify-between rounded-md border border-green-100 bg-green-50 px-2 py-1 text-[11px] text-green-700">
+              <span>Pelanggan hemat</span>
+              <span className="font-bold">{formatRupiah(itemDiscountTotal)}</span>
+            </div>
+          )}
+        </div>
+
         {/* Total Harga (Langsung menampilkan grandTotal, tanpa input manual) */}
         <div className="flex justify-between items-center pt-2">
           <span className="text-base font-bold text-gray-800">Total Harga</span>

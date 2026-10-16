@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
+import { ACTIVE_STORE_EVENT, getActiveStoreId, isMainStore, resolveActiveStore } from '@/lib/activeStore';
+import { clampQuickDiscount } from '@/lib/productUtils';
 
 export default function useTransaction() {
   const { user } = useAuth();
   const [storeId, setStoreId] = useState(null);
+  const [storeName, setStoreName] = useState('');
+  // Diskon Cepat (nominal Rp) hanya boleh dipakai di cabang utama.
+  const [isMainBranch, setIsMainBranch] = useState(false);
   // ==========================================
   // 1. STATE MANAGEMENT
   // ==========================================
@@ -50,6 +54,8 @@ export default function useTransaction() {
     const fetchInitialData = async () => {
       if (!user?.id) {
         setStoreId(null);
+        setStoreName('');
+        setIsMainBranch(false);
         setProducts([]);
         setCategories([]);
         setCartItems([]);
@@ -67,6 +73,8 @@ export default function useTransaction() {
 
       if (storeError || !storeData) {
         setStoreId(null);
+        setStoreName('');
+        setIsMainBranch(false);
         setCategories([]);
         setProducts([]);
         setCartItems([]);
@@ -74,6 +82,8 @@ export default function useTransaction() {
       }
 
       setStoreId(storeData.id);
+      setStoreName(storeData.name || '');
+      setIsMainBranch(isMainStore(storeData, stores));
 
       const { data: merchantData } = await supabase
         .from('merchants')
@@ -217,7 +227,10 @@ export default function useTransaction() {
       const basePrice = priceData ? Number(priceData.price) : Number(product.base_price);
       const platformFeePct = priceData ? Number(priceData.platform_fee_pct) : 0;
       const discountPct = Number(product.discount_pct) || 0;
-      const unitPrice = Math.round(basePrice - (basePrice * (discountPct / 100)));
+      // Harga normal = harga channel (offline/online) setelah diskon persen produk.
+      // Diskon Cepat kasir (nominal Rp) dipotong dari harga normal ini.
+      const normalUnitPrice = Math.round(basePrice - (basePrice * (discountPct / 100)));
+      const unitPrice = normalUnitPrice;
       const hpp = Number(product.hpp) || 0;
       
       if (existingItem) {
@@ -242,6 +255,9 @@ export default function useTransaction() {
         unit_price: unitPrice, 
         original_price: basePrice, 
         discount_pct: discountPct,
+        // Harga normal per unit sebelum Diskon Cepat (acuan validasi & tampilan)
+        base_unit_price: normalUnitPrice,
+        quick_discount: 0,
         platform_fee_pct: platformFeePct,
         line_total: unitPrice,
         category_name: product.categories?.name || 'Umum',
@@ -249,6 +265,34 @@ export default function useTransaction() {
       }];
     });
   };
+
+  // ==========================================
+  // 4b. DISKON CEPAT (NOMINAL Rp) — KHUSUS CABANG UTAMA
+  // Kasir langsung mengetik nominal potongan (mis. 5.000) atau harga jual akhir
+  // (mis. 25.000) untuk satu produk. Nilai potongan "dibakar" ke unit_price
+  // persis seperti perilaku discount_pct produk, sehingga subtotal, grandTotal,
+  // laporan, dan struk tetap konsisten (subtotal - discount = grand_total).
+  // ==========================================
+  const applyItemDiscount = (productId, discountPerUnit) => {
+    setCartItems(prev =>
+      prev.map(item => {
+        if (item.id !== productId) return item;
+
+        const normalPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
+        const discount = clampQuickDiscount(discountPerUnit, normalPrice);
+        const unitPrice = normalPrice - discount;
+
+        return {
+          ...item,
+          quick_discount: discount,
+          unit_price: unitPrice,
+          line_total: Math.round(unitPrice * item.qty)
+        };
+      })
+    );
+  };
+
+  const clearItemDiscount = (productId) => applyItemDiscount(productId, 0);
 
   const updateQty = (productId, newQty) => {
     if (newQty <= 0) {
@@ -288,10 +332,18 @@ export default function useTransaction() {
   // 5. CALCULATIONS (PERHITUNGAN)
   // ==========================================
   const subtotal = Math.round(cartItems.reduce((sum, item) => sum + item.line_total, 0));
+  // Total Diskon Cepat yang diberikan kasir (potongan per unit x qty).
+  const itemDiscountTotal = Math.round(cartItems.reduce((sum, item) => {
+    return sum + ((Number(item.quick_discount) || 0) * item.qty);
+  }, 0));
+  // Subtotal "harga normal" sebelum Diskon Cepat (untuk tampilan di keranjang).
+  const subtotalBeforeDiscount = subtotal + itemDiscountTotal;
   const platformFee = Math.round(cartItems.reduce((sum, item) => {
     return sum + ((item.line_total * item.platform_fee_pct) / 100);
   }, 0));
   const grandTotal = Math.max(0, subtotal - discount);
+  // Hemat pelanggan = Diskon Cepat per item + diskon level transaksi (kalau ada).
+  const totalSavings = itemDiscountTotal + discount;
 
   // ==========================================
   // 6. CHECKOUT & DATABASE INSERT
@@ -378,12 +430,19 @@ export default function useTransaction() {
           name: item.name,
           qty: item.qty,
           unit_price: item.unit_price,
-          line_total: item.line_total
+          line_total: item.line_total,
+          // Info Diskon Cepat: harga normal per unit & total potongan baris ini
+          original_unit_price: Number(item.base_unit_price) || Number(item.unit_price) || 0,
+          discount_amount: (Number(item.quick_discount) || 0) * item.qty
         })),
         subtotal: subtotal,
         discount: discount,
         grand_total: grandTotal,
         amount_paid: amountPaid,
+        // Diskon Cepat sudah "dibakar" ke unit_price, jadi sales.discount tetap
+        // diskon level transaksi. Dua baris ini hanya info tambahan untuk struk.
+        item_discount_total: itemDiscountTotal,
+        total_savings: totalSavings,
         change: change,
         payment_method: paymentData.payment_method
       };
@@ -429,6 +488,13 @@ export default function useTransaction() {
     clearCart,
     customerName,
     setCustomerName,
+    isMainBranch,
+    storeName,
+    applyItemDiscount,
+    clearItemDiscount,
+    itemDiscountTotal,
+    subtotalBeforeDiscount,
+    totalSavings,
     discount,
     setDiscount,
     subtotal,

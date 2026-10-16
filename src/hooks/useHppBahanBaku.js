@@ -20,6 +20,11 @@ const isMissingPurchaseMetadata = (error) => (
  * CATATAN: Kolom 'hpp' di database tetap murni bahan baku. 
  * Namun, 'base_price' (harga jual default) sekarang dihitung berdasarkan HPP SEJATI 
  * dengan Margin 50% agar UMKM tidak rugi dan sesuai dengan rekomendasi UI.
+ *
+ * Mendukung 2 mode input:
+ * - 'detail' : bahan baku diinput 1 per 1 -> resep & rincian bahan disimpan, stok bahan dipotong.
+ * - 'cepat'  : akumulasi modal -> HPP = Total Modal : Jumlah Hasil, tanpa rincian bahan
+ *              (recipe_ingredients dilewati, stok bahan tidak dipotong).
  */
 export default function useHppBahanBaku() {
   const { user } = useAuth();
@@ -248,6 +253,13 @@ export default function useHppBahanBaku() {
       const today = new Date().toISOString().split('T')[0]; 
       let recipeId;
 
+      // Catatan resep: pakai input user, kalau kosong pakai default sesuai mode input
+      const isQuickMode = formData.modeInput === 'cepat';
+      const catatanResep = (formData.catatanResep || '').trim();
+      const defaultCatatan = isQuickMode
+        ? 'HPP mode cepat (akumulasi modal) - rincian bahan baku tidak dicatat'
+        : null;
+
       if (existingRecipe) {
         // --- UPDATE RESEP YANG SUDAH ADA ---
         recipeId = existingRecipe.id;
@@ -259,7 +271,7 @@ export default function useHppBahanBaku() {
             yield_qty: jumlahProduk, 
             total_yield: Number(formData.totalYield) || jumlahProduk,
             effective_date: today,
-            notes: formData.catatanResep || 'Resep bahan baku diperbarui'
+            notes: catatanResep || defaultCatatan || 'Resep bahan baku diperbarui'
           })
           .eq('id', recipeId);
 
@@ -283,7 +295,7 @@ export default function useHppBahanBaku() {
             yield_qty: jumlahProduk, 
             total_yield: Number(formData.totalYield) || jumlahProduk,
             effective_date: today,
-            notes: formData.catatanResep || 'Resep bahan baku baru'
+            notes: catatanResep || defaultCatatan || 'Resep bahan baku baru'
           })
           .select('id')
           .single();
@@ -293,18 +305,21 @@ export default function useHppBahanBaku() {
       }
 
       // Langkah 4: Insert bahan baku baru (Bulk Insert)
-      const ingredientsPayload = formData.bahanBakuList.map(bahan => ({
+      // CATATAN: Mode cepat (akumulasi) tidak punya rincian bahan baku, jadi insert di-skip.
+      const ingredientsPayload = (formData.bahanBakuList || []).map(bahan => ({
         recipe_id: recipeId,
         raw_material_id: parseInt(bahan.raw_material_id, 10), 
         qty_needed: parseFloat(bahan.qty_needed),
         unit: bahan.unit // Satuan resep (bukan satuan beli)
       }));
 
-      const { error: ingredientsError } = await supabase
-        .from('recipe_ingredients')
-        .insert(ingredientsPayload);
+      if (ingredientsPayload.length > 0) {
+        const { error: ingredientsError } = await supabase
+          .from('recipe_ingredients')
+          .insert(ingredientsPayload);
 
-      if (ingredientsError) throw new Error('Gagal menyimpan detail bahan baku: ' + ingredientsError.message);
+        if (ingredientsError) throw new Error('Gagal menyimpan detail bahan baku: ' + ingredientsError.message);
+      }
 
       // Hanya kurangi selisih pemakaian agar menyimpan ulang resep tidak mengurangi stok dua kali.
       const stockChanges = new Map();

@@ -31,6 +31,32 @@ export const resolveActiveStore = (stores, preferredId = null) => {
 };
 
 // ==========================================
+// DETEKSI CABANG UTAMA
+// Dipakai oleh fitur yang hanya boleh aktif di cabang utama (mis. Diskon
+// Cepat di halaman Transaksi). Urutan deteksi, dari yang paling eksplisit:
+//   1. Kolom `is_main` di tabel stores (kalau nanti ditambahkan via migrasi).
+//   2. Nama cabang mengandung "Cabang Utama" — format bawaan saat registrasi:
+//      "<Nama Usaha> - Cabang Utama".
+//   3. Cabang tertua (id terkecil) dianggap cabang utama.
+// ==========================================
+export const MAIN_STORE_NAME_PATTERN = /cabang\s*utama/i;
+
+export const isMainStore = (store, allStores = []) => {
+  if (!store) return false;
+  if (store.is_main === true) return true;
+  if (store.is_main === false) return false;
+  if (MAIN_STORE_NAME_PATTERN.test(String(store.name || ''))) return true;
+
+  const ids = (Array.isArray(allStores) ? allStores : [])
+    .map((s) => Number(s?.id))
+    .filter((id) => Number.isFinite(id));
+
+  if (ids.length === 0) return false;
+  return Number(store.id) === Math.min(...ids);
+};
+
+
+// ==========================================
 // HOOK: useActiveStore()
 // Mengembalikan { storeId } toko yang sedang aktif dan otomatis
 // re-render ketika toko diganti (setActiveStoreId) atau ketika tab

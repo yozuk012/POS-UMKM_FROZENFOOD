@@ -1,9 +1,14 @@
 'use client';
 
-import { FiPackage, FiPlus, FiTrash2, FiLayers, FiInfo } from 'react-icons/fi';
+import { FiPackage, FiPlus, FiTrash2, FiLayers, FiInfo, FiZap, FiDollarSign, FiFileText } from 'react-icons/fi';
 import { convertToBaseQuantity, formatCompactRupiah, getPurchaseDisplay } from '@/lib/rawMaterialUtils';
+import ModeSwitcher from './ModeSwitcher';
 
 export default function Step1BahanBaku({
+  // Mode Input HPP ('detail' = 1 per 1, 'cepat' = akumulasi modal)
+  modeInput, setModeInput,
+  totalModalCepat, setTotalModalCepat,
+
   // State Produk & Resep
   namaProduk, setNamaProduk,
   categoryId, setCategoryId,
@@ -14,11 +19,15 @@ export default function Step1BahanBaku({
   // State Bahan Baku
   bahanBakuList, setBahanBakuList,
   rawMaterials,
-  totalPembelianBahan,
+  totalModalBatch,
   
+  // Catatan resep (opsional)
+  catatanHpp, setCatatanHpp,
+
   // Actions
   onNext
 }) {
+  const isModeCepat = modeInput === 'cepat';
   
   // Tambah card bahan baku baru
   const handleAddBahanBaku = () => {
@@ -113,7 +122,18 @@ export default function Step1BahanBaku({
       alert('Jumlah hasil produksi (yield) harus lebih dari 0.');
       return;
     }
-    
+
+    // MODE CEPAT (AKUMULASI): cukup total modal + jumlah hasil
+    if (isModeCepat) {
+      if (!totalModalCepat || parseFloat(totalModalCepat) <= 0) {
+        alert('Mohon masukkan Total Modal produksi (harus lebih dari 0).');
+        return;
+      }
+      onNext();
+      return;
+    }
+
+    // MODE DETAIL (INPUT 1 PER 1): semua bahan wajib lengkap
     const hasEmptyBahan = bahanBakuList.some(item => !item.raw_material_id || !item.qty_needed || parseFloat(item.qty_needed) <= 0);
     if (hasEmptyBahan) {
       alert('Mohon pilih bahan baku dan masukkan jumlah yang dibutuhkan dengan benar.');
@@ -133,11 +153,15 @@ export default function Step1BahanBaku({
   };
 
   // Hitung estimasi HPP per unit di Step 1 (untuk preview user)
-  const estimasiHppPerUnit = parseFloat(jumlahProduk) > 0 ? (totalPembelianBahan / parseFloat(jumlahProduk)) : 0;
+  // Rumus: Total Modal : Jumlah Hasil (berlaku untuk mode 1 per 1 maupun mode cepat)
+  const estimasiHppPerUnit = parseFloat(jumlahProduk) > 0 ? (totalModalBatch / parseFloat(jumlahProduk)) : 0;
 
   return (
     <main className="px-4 py-6 space-y-6">
       
+      {/* 0. Pilih Cara Input: 1 per 1 (rinci) atau Mode Cepat (akumulasi) */}
+      <ModeSwitcher modeInput={modeInput} setModeInput={setModeInput} />
+
       {/* 1. Informasi Produk & Header Resep */}
       <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-5 border border-gray-100">
         <div className="flex items-center gap-2 mb-4">
@@ -199,7 +223,70 @@ export default function Step1BahanBaku({
         </div>
       </div>
 
-      {/* 2. Cards Bahan Baku */}
+      {/* 2A. MODE CEPAT (AKUMULASI): Total Modal : Jumlah Hasil */}
+      {isModeCepat && (
+        <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-5 border border-gray-100">
+          <div className="flex items-center gap-2 mb-4">
+            <FiZap className="text-blue-600 w-5 h-5" />
+            <h3 className="text-lg font-bold text-gray-800">Akumulasi Modal Produksi</h3>
+          </div>
+
+          <div className="space-y-4">
+            {/* Input Total Modal */}
+            <div>
+              <label className="block text-gray-700 text-sm font-semibold mb-2 flex items-center gap-2">
+                <FiDollarSign className="w-4 h-4 text-gray-500" />
+                Total Modal 1 Batch <span className="text-gray-400 font-normal">(Rp)</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={totalModalCepat}
+                onChange={(e) => setTotalModalCepat(e.target.value)}
+                placeholder="Contoh: 250000"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Total biaya yang dikeluarkan untuk 1x produksi (bahan, kemasan, dan biaya lain yang ingin dihitung).
+              </p>
+            </div>
+
+            {/* Rumus & Hasil Otomatis */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-2">
+                Rumus: Total Modal : Jumlah yang Dihasilkan
+              </p>
+              <div className="flex justify-between items-center text-sm text-gray-700">
+                <span>Total Modal</span>
+                <span className="font-bold">{formatRupiah(parseFloat(totalModalCepat) || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm text-gray-700 mt-1">
+                <span>Jumlah Hasil</span>
+                <span className="font-bold">
+                  {(parseFloat(jumlahProduk) || 0).toLocaleString('id-ID')} {satuanProduk || 'unit'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-t border-blue-200 mt-3 pt-3">
+                <span className="font-semibold text-gray-800">HPP per {satuanProduk || 'unit'}</span>
+                <span className="text-xl font-bold text-blue-700">{formatRupiah(estimasiHppPerUnit)}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
+              <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>
+                Mode cepat tidak menyimpan rincian bahan baku dan <strong>tidak memotong stok bahan baku</strong>.
+                Gunakan mode &quot;Input 1 Per 1&quot; bila ingin stok bahan ikut terpotong otomatis.
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 2B. MODE 1 PER 1: Cards Bahan Baku */}
+      {!isModeCepat && (
+      <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -299,14 +386,18 @@ export default function Step1BahanBaku({
         <FiPlus className="w-5 h-5" />
         TAMBAH BAHAN LAIN
       </button>
+      </>
+      )}
 
       {/* 4. Ringkasan Perhitungan (Preview) */}
-      {totalPembelianBahan > 0 && parseFloat(jumlahProduk) > 0 && (
+      {totalModalBatch > 0 && parseFloat(jumlahProduk) > 0 && (
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-5 text-white">
           <div className="space-y-3">
             <div className="flex justify-between items-center border-b border-blue-400/50 pb-3">
-              <span className="text-blue-100 font-medium">Total HPP Bahan Baku (1 Batch):</span>
-              <span className="text-xl font-bold">{formatRupiah(totalPembelianBahan)}</span>
+              <span className="text-blue-100 font-medium">
+                {isModeCepat ? 'Total Modal / Akumulasi (1 Batch):' : 'Total HPP Bahan Baku (1 Batch):'}
+              </span>
+              <span className="text-xl font-bold">{formatRupiah(totalModalBatch)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-blue-100 font-medium">Estimasi HPP per {satuanProduk || 'unit'}:</span>
@@ -321,7 +412,25 @@ export default function Step1BahanBaku({
         </div>
       )}
 
-      {/* 5. Tombol Lanjut (PERUBAHAN TEKS DI SINI) */}
+      {/* 4B. Catatan Produksi / Resep (Opsional) */}
+      <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-5 border border-gray-100">
+        <label className="block text-gray-700 text-sm font-semibold mb-2 flex items-center gap-2">
+          <FiFileText className="w-4 h-4 text-gray-500" />
+          Catatan Produksi <span className="text-gray-400 font-normal">(Opsional)</span>
+        </label>
+        <input
+          type="text"
+          value={catatanHpp}
+          onChange={(e) => setCatatanHpp(e.target.value)}
+          placeholder="Contoh: Produksi batch 1, 16 Okt"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Catatan ini disimpan pada resep produk, berguna sebagai penanda saat memakai mode cepat.
+        </p>
+      </div>
+
+      {/* 5. Tombol Lanjut */}
       <button
         onClick={handleLanjut}
         className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"

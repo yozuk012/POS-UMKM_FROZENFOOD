@@ -34,6 +34,13 @@ export default function HitungHPPPage() {
   const [jumlahProduk, setJumlahProduk] = useState('');
   const [satuanProduk, setSatuanProduk] = useState('pack');
 
+  // --- MODE INPUT HPP ---
+  // 'detail' = bahan baku diinput 1 per 1 (resep rinci)
+  // 'cepat'  = akumulasi modal -> HPP = Total Modal : Jumlah Hasil
+  const [modeInput, setModeInput] = useState('detail');
+  const [totalModalCepat, setTotalModalCepat] = useState('');
+  const [catatanHpp, setCatatanHpp] = useState('');
+
   const [bahanBakuList, setBahanBakuList] = useState([
     { 
       id: Date.now(), 
@@ -57,8 +64,14 @@ export default function HitungHPPPage() {
 
   // --- PERHITUNGAN OTOMATIS (Derived State) ---
   const totalPembelianBahan = bahanBakuList.reduce((sum, item) => sum + (parseFloat(item.hargaBeli) || 0), 0);
+
+  // Mode cepat (akumulasi): total modal diinput langsung sebagai 1 angka, bukan dihitung dari daftar bahan.
+  const totalModalCepatNum = parseFloat(totalModalCepat) || 0;
+  const totalModalBatch = modeInput === 'cepat' ? totalModalCepatNum : totalPembelianBahan;
+
   const jumlahProdukNum = parseFloat(jumlahProduk) || 0;
-  const hppBahanPerProduk = jumlahProdukNum > 0 ? (totalPembelianBahan / jumlahProdukNum) : 0;
+  // Rumus inti kedua mode: Total Modal : Jumlah yang Dihasilkan
+  const hppBahanPerProduk = jumlahProdukNum > 0 ? (totalModalBatch / jumlahProdukNum) : 0;
 
   // --- NAVIGASI ---
   const handleNext = () => setCurrentStep(prev => prev + 1);
@@ -76,14 +89,19 @@ export default function HitungHPPPage() {
         categoryId: categoryId ? parseInt(categoryId, 10) : null,
         jumlahProduk: jumlahProdukNum,
         satuanProduk: satuanProduk,
-        hppPerProduk: hppBahanPerProduk, // Murni bahan baku
+        hppPerProduk: hppBahanPerProduk, // Murni bahan baku / modal akumulasi
         hargaRekomendasi: getRecommendedPrice(hppBahanPerProduk),
         totalBiayaOperasional: 0,        // 0 karena operasional dicatat terpisah
-        bahanBakuList: bahanBakuList.map(b => ({
-          raw_material_id: parseInt(b.raw_material_id, 10),
-          qty_needed: parseFloat(b.qty_needed),
-          unit: b.satuan
-        }))
+        modeInput: modeInput,            // 'detail' atau 'cepat'
+        catatanResep: catatanHpp.trim(),
+        // Mode cepat (akumulasi) tidak menyimpan rincian bahan baku.
+        bahanBakuList: modeInput === 'cepat'
+          ? []
+          : bahanBakuList.map(b => ({
+              raw_material_id: parseInt(b.raw_material_id, 10),
+              qty_needed: parseFloat(b.qty_needed),
+              unit: b.satuan
+            }))
       };
 
       // 2. Eksekusi Simpan Bahan Baku & Resep
@@ -91,7 +109,10 @@ export default function HitungHPPPage() {
       if (!resultBahan.success) throw new Error(resultBahan.message);
 
       // 3. Sukses - Tampilkan pesan & redirect
-      alert('✅ Produk dan Resep berhasil disimpan!\n\n💡 Jangan lupa catat biaya operasional (gas, listrik, kemasan) di halaman Pengeluaran agar laporan laba rugi akurat.');
+      const pesanSukses = modeInput === 'cepat'
+        ? '✅ Produk & HPP (mode cepat/akumulasi) berhasil disimpan!'
+        : '✅ Produk dan Resep berhasil disimpan!';
+      alert(`${pesanSukses}\n\n💡 Jangan lupa catat biaya operasional (gas, listrik, kemasan) di halaman Pengeluaran agar laporan laba rugi akurat.`);
       router.push('/hpp/hppproduk');
 
     } catch (err) {
@@ -138,6 +159,8 @@ export default function HitungHPPPage() {
 
         {currentStep === 1 && (
           <Step1BahanBaku
+            modeInput={modeInput} setModeInput={setModeInput}
+            totalModalCepat={totalModalCepat} setTotalModalCepat={setTotalModalCepat}
             namaProduk={namaProduk} setNamaProduk={setNamaProduk}
             categoryId={categoryId} setCategoryId={setCategoryId}
             categories={categories}
@@ -145,7 +168,8 @@ export default function HitungHPPPage() {
             satuanProduk={satuanProduk} setSatuanProduk={setSatuanProduk}
             bahanBakuList={bahanBakuList} setBahanBakuList={setBahanBakuList}
             rawMaterials={rawMaterials}
-            totalPembelianBahan={totalPembelianBahan}
+            totalModalBatch={totalModalBatch}
+            catatanHpp={catatanHpp} setCatatanHpp={setCatatanHpp}
             onNext={handleNext}
           />
         )}
@@ -153,8 +177,9 @@ export default function HitungHPPPage() {
         {currentStep === 2 && (
           <Step2Hasil
             namaProduk={namaProduk}
+            modeInput={modeInput}
             jumlahProduk={jumlahProdukNum}
-            totalHppBahanBaku={totalPembelianBahan}
+            totalHppBahanBaku={totalModalBatch}
             isSubmitting={isSubmittingBahan}
             onSubmit={handleSubmitFinal}
             onBack={handleBack}

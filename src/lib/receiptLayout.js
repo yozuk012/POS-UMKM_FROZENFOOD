@@ -132,8 +132,19 @@ export function buildReceiptLayout(receiptData, options = {}) {
   } else {
     items.forEach((item) => {
       const qty = Number(item.qty) || 0;
+      const unitPrice = Number(item.unit_price) || 0;
+      const normalPrice = Number(item.original_unit_price) || unitPrice;
+
       pushText(item.name || '-');
-      pushRow(`${qty} x ${formatRupiah(item.unit_price)}`, formatRupiah(item.line_total));
+
+      // Diskon Cepat kasir: tampilkan harga normal + potongannya sebagai info
+      // (harga jual per unit sudah bersih dari potongan).
+      if (normalPrice > unitPrice) {
+        pushRow('  Harga normal', formatRupiah(normalPrice));
+        pushRow('  Diskon cepat', `-${formatRupiah(normalPrice - unitPrice)}`);
+      }
+
+      pushRow(`${qty} x ${formatRupiah(unitPrice)}`, formatRupiah(item.line_total));
     });
   }
   lines.push({ kind: 'hr' });
@@ -145,6 +156,10 @@ export function buildReceiptLayout(receiptData, options = {}) {
   pushRow('TOTAL', formatRupiah(data.grand_total), { bold: true });
   pushRow('Dibayar', formatRupiah(data.amount_paid));
   pushRow('Kembalian', formatRupiah(data.change));
+
+  // 4b. INFO HEMAT (Diskon Cepat nominal Rp yang sudah dipotong dari harga jual)
+  const totalSavings = Number(data.total_savings) || 0;
+  if (totalSavings > 0) pushRow('Anda hemat', formatRupiah(totalSavings));
 
   // 5. INFO TRANSFER (hanya kalau metode pembayaran transfer)
   if (paymentMethod === 'transfer' && store.bank_name) {

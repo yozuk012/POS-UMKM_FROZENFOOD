@@ -7,7 +7,7 @@ const OPTIONS = [
     name: 'uploadImages',
     label: 'Unggah gambar produk ke Supabase Storage',
     description:
-      'Gambar dioptimasi ke WebP lalu diunggah ke folder product-toko (seperti saat menambah produk manual). Jika dimatikan, produk memakai path lokal /seeds/images.',
+      'Gambar dioptimasi ke WebP lalu diunggah ke folder product-toko (seperti saat menambah produk manual). Jika dimatikan, produk memakai gambar dari src/seeds/images.',
   },
   {
     name: 'createInventory',

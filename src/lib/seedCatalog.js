@@ -15,7 +15,7 @@
 
 import seedRaw from '@/seeds/data.json';
 
-export const SEED_IMAGE_PUBLIC_BASE = '/seeds/images';
+export const SEED_IMAGE_API_BASE = '/api/seed-images';
 export const SEED_DEFAULT_UNIT = 'pack';
 export const SEED_PRODUCT_TYPE = 'finished_good';
 
@@ -114,7 +114,9 @@ export const buildSeedCatalog = () => {
       hpp: 0,
       category_name: String(item?.kategori || '').trim() || 'Tanpa Kategori',
       image_file: imageFile,
-      image_local_url: imageFile ? `${SEED_IMAGE_PUBLIC_BASE}/${imageFile}` : null,
+      image_local_url: imageFile
+        ? `${SEED_IMAGE_API_BASE}/${encodeURIComponent(imageFile)}`
+        : null,
       note: String(item?.catatan || '').trim(),
       // Hanya untuk preview di UI, tidak pernah dikirim ke database
       source_price: Number(item?.harga) || 0,
