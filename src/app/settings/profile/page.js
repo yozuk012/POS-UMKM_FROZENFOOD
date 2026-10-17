@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  FiUser, 
-  FiEdit, 
-  FiLock, 
-  FiPercent, 
-  FiRefreshCw, 
-  FiLogOut,
-  FiShield,
-  FiDatabase,
-  FiLoader
-} from 'react-icons/fi';
+import { FiLoader } from 'react-icons/fi';
+import {
+  MdChevronLeft,
+  MdExpandLess,
+  MdExpandMore,
+  MdFileDownload,
+  MdInventory2,
+  MdLockOutline,
+  MdOutlineEdit,
+  MdPercent,
+  MdPerson,
+  MdSettings,
+  MdStorefront,
+  MdSync,
+} from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useActiveStore } from '@/lib/activeStore';
@@ -26,6 +30,9 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState('Memuat...');
   const [logoUrl, setLogoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // State dropdown menu pengaturan (default tertutup, seperti dropdown lain di aplikasi)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 2. FETCH DATA PROFIL DAN TOKO AKTIF
   useEffect(() => {
@@ -72,48 +79,26 @@ export default function ProfilePage() {
     fetchProfile();
   }, [router, storeId]);
 
+  // Menu utama di dalam dropdown "Setting"
   const menuItems = [
-    {
-      section: 'Account',
-      icon: FiUser,
-      items: [
-        { label: 'Edit Profile', icon: FiEdit, href: '/settings/profile/edit-profile' },
-        { label: 'Change Password', icon: FiLock, href: '/settings/profile/change-password' },
-        { label: 'Persentase Online', icon: FiPercent, href: '/settings/profile/persentase-online' },
-      ]
-    },
-    {
-      section: 'More',
-      icon: FiShield,
-      items: [
-        { label: 'Switch Account', icon: FiRefreshCw, href: '/settings/profile/stores' },
-        { label: 'Export Data', icon: FiShield, href: '/settings/profile/export-data' },
-        { label: 'Seed Data Produk', icon: FiDatabase, href: '/settings/profile/seed-data' },
-        { label: 'Logout', icon: FiLogOut, href: '/auth/login', isDanger: true },
-      ]
-    }
+    { label: 'Edit Profile', icon: MdOutlineEdit, href: '/settings/profile/edit-profile' },
+    { label: 'Change Password', icon: MdLockOutline, href: '/settings/profile/change-password' },
+    { label: 'Persentase Online', icon: MdPercent, href: '/settings/profile/persentase-online' },
+    { label: 'Switch Store', icon: MdSync, href: '/settings/profile/stores' },
+    { label: 'Export Data', icon: MdFileDownload, href: '/settings/profile/export-data' },
+  ];
+
+  // Sub-menu "More" - item Logout sengaja dihapus dari halaman ini
+  const moreItems = [
+    { label: 'Seed Data Produk', icon: MdInventory2, href: '/settings/profile/seed-data' },
   ];
 
   const handleMenuClick = (href) => {
     router.push(href);
   };
 
-  // 3. IMPLEMENTASI LOGOUT YANG SEBENARNYA
-  const handleLogout = async () => {
-    if (!window.confirm('Apakah Anda yakin ingin keluar?')) return;
-
-    console.log('Logging out...');
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Redirect ke halaman login setelah berhasil logout
-      router.push('/auth/login');
-    } catch (error) {
-      console.error('Error saat logout:', error.message);
-      alert('Gagal melakukan logout. Silakan coba lagi.');
-    }
-  };
+  // Catatan: tombol Logout sudah dihapus dari halaman Setting.
+  // Logout tetap tersedia lewat tombol di footer Sidebar.
 
   // Tampilkan loading spinner jika data belum siap (opsional, tapi menjaga UX tetap baik)
   if (isLoading) {
@@ -147,7 +132,7 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <FiUser className="w-12 h-12 text-gray-500" />
+                  <MdPerson className="w-12 h-12 text-gray-500" />
                 )}
               </div>
               
@@ -162,58 +147,84 @@ export default function ProfilePage() {
           </header>
         </div>
 
-        {/* Menu Sections */}
-        <div className="px-0 md:px-0 py-6 space-y-6">
-          {menuItems.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Section Header */}
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <section.icon className="w-5 h-5 text-gray-700" />
-                  <h3 className="font-semibold text-gray-800">{section.section}</h3>
-                </div>
+        {/* Dropdown Menu Setting */}
+        <div className="py-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Tombol pembuka dropdown */}
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-expanded={isMenuOpen}
+              aria-controls="settings-dropdown"
+              className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                  <MdSettings className="w-5 h-5" />
+                </span>
+                <span className="text-left">
+                  <span className="block font-semibold text-gray-800">Setting</span>
+                  <span className="block text-xs text-gray-500">
+                    {isMenuOpen
+                      ? `${menuItems.length + moreItems.length} menu pengaturan`
+                      : 'Ketuk untuk melihat menu pengaturan'}
+                  </span>
+                </span>
               </div>
+              {isMenuOpen ? (
+                <MdExpandLess className="w-5 h-5 text-gray-400 shrink-0" />
+              ) : (
+                <MdExpandMore className="w-5 h-5 text-gray-400 shrink-0" />
+              )}
+            </button>
 
-              {/* Menu Items */}
-              <div className="divide-y divide-gray-100">
-                {section.items.map((item, itemIndex) => (
+            {/* Isi dropdown */}
+            {isMenuOpen && (
+              <div
+                id="settings-dropdown"
+                className="border-t border-gray-100 divide-y divide-gray-100 animate-in fade-in slide-in-from-top-2 duration-200"
+              >
+                {menuItems.map((item) => (
                   <button
-                    key={itemIndex}
-                    onClick={() => item.isDanger ? handleLogout() : handleMenuClick(item.href)}
-                    className={`w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
-                      item.isDanger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
-                    }`}
+                    key={item.href}
+                    type="button"
+                    onClick={() => handleMenuClick(item.href)}
+                    className="w-full px-4 py-4 flex items-center justify-between text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
+                    <span className="flex items-center gap-3">
+                      <item.icon className="w-5 h-5 text-gray-500" />
                       <span className="font-medium">{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.isDanger ? (
-                        <div className="w-6 h-6 flex items-center justify-center">
-                          <FiLogOut className="w-5 h-5" />
-                        </div>
-                      ) : (
-                        <svg 
-                          className="w-5 h-5 text-gray-400" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M9 5l7 7-7 7" 
-                          />
-                        </svg>
-                      )}
-                    </div>
+                    </span>
+                    <MdChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
                 ))}
+
+                {/* Sub-menu More (tanpa Logout) */}
+                <div className="bg-gray-50/60">
+                  <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+                    <MdStorefront className="w-4 h-4 text-gray-400" />
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                      More
+                    </p>
+                  </div>
+                  {moreItems.map((item) => (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => handleMenuClick(item.href)}
+                      className="w-full px-4 py-4 flex items-center justify-between text-gray-700 hover:bg-white transition-colors"
+                    >
+                      <span className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5 text-gray-500" />
+                        <span className="font-medium">{item.label}</span>
+                      </span>
+                      <MdChevronLeft className="w-4 h-4 text-gray-400" />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
 
         {/* Bottom Navigation Spacer */}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import useProducts from "@/hooks/useProducts";
+import useCopyAvailability from "@/hooks/useCopyAvailability";
 import CopyDataModal from "@/components/CopyDataModal";
 
 // Import semua komponen yang sudah dipecah
@@ -14,6 +15,7 @@ import ProductFormModal from "./components/ProductFormModal";
 
 export default function ProductsPage() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const { canCopy } = useCopyAvailability();
 
   // Semua state dan handler tetap di-handle oleh custom hook
   const {
@@ -35,7 +37,7 @@ export default function ProductsPage() {
       {/* 1. Header Halaman */}
       <ProductHeader
         openAddModal={openAddModal}
-        onOpenCopyModal={() => setIsCopyModalOpen(true)}
+        onOpenCopyModal={canCopy ? () => setIsCopyModalOpen(true) : null}
       />
 
       {/* 2. Filter & Search */}
@@ -62,8 +64,7 @@ export default function ProductsPage() {
         openEditModal={openEditModal}
         toggleProductStatus={toggleProductStatus}
         deleteProduct={deleteProduct}
-        onOpenCopyModal={() => setIsCopyModalOpen(true)}
-        openAddModal={openAddModal}
+        onOpenCopyModal={canCopy ? () => setIsCopyModalOpen(true) : null}
       />
 
       {/* 4. Pagination */}

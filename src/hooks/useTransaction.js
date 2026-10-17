@@ -234,15 +234,21 @@ export default function useTransaction() {
       const hpp = Number(product.hpp) || 0;
       
       if (existingItem) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { 
-                ...item, 
-                qty: item.qty + 1, 
-                line_total: Math.round((item.qty + 1) * item.unit_price) 
-              }
-            : item
-        );
+        return prev.map(item => {
+          if (item.id !== product.id) return item;
+
+          const nextQty = item.qty + 1;
+          const normalLineTotal = item.base_unit_price * nextQty;
+          const discount = clampQuickDiscount(item.quick_discount, normalLineTotal);
+          const lineTotal = normalLineTotal - discount;
+
+          return {
+            ...item,
+            qty: nextQty,
+            unit_price: nextQty > 0 ? lineTotal / nextQty : 0,
+            line_total: Math.round(lineTotal),
+          };
+        });
       }
       
       return [...prev, {
@@ -269,24 +275,26 @@ export default function useTransaction() {
   // ==========================================
   // 4b. DISKON CEPAT (NOMINAL Rp) — KHUSUS CABANG UTAMA
   // Kasir langsung mengetik nominal potongan (mis. 5.000) atau harga jual akhir
-  // (mis. 25.000) untuk satu produk. Nilai potongan "dibakar" ke unit_price
+  // (mis. 25.000) untuk total satu baris produk. Nilai potongan "dibakar" ke unit_price
   // persis seperti perilaku discount_pct produk, sehingga subtotal, grandTotal,
   // laporan, dan struk tetap konsisten (subtotal - discount = grand_total).
   // ==========================================
-  const applyItemDiscount = (productId, discountPerUnit) => {
+  const applyItemDiscount = (productId, discountAmount) => {
     setCartItems(prev =>
       prev.map(item => {
         if (item.id !== productId) return item;
 
-        const normalPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
-        const discount = clampQuickDiscount(discountPerUnit, normalPrice);
-        const unitPrice = normalPrice - discount;
+        const normalUnitPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
+        const normalLineTotal = normalUnitPrice * item.qty;
+        const discount = clampQuickDiscount(discountAmount, normalLineTotal);
+        const lineTotal = normalLineTotal - discount;
+        const unitPrice = item.qty > 0 ? lineTotal / item.qty : 0;
 
         return {
           ...item,
           quick_discount: discount,
           unit_price: unitPrice,
-          line_total: Math.round(unitPrice * item.qty)
+          line_total: Math.round(lineTotal)
         };
       })
     );
@@ -310,11 +318,21 @@ export default function useTransaction() {
     }
 
     setCartItems(prev =>
-      prev.map(item =>
-        item.id === productId
-          ? { ...item, qty: newQty, line_total: Math.round(newQty * item.unit_price) }
-          : item
-      )
+      prev.map(item => {
+        if (item.id !== productId) return item;
+
+        const normalUnitPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
+        const normalLineTotal = normalUnitPrice * newQty;
+        const discount = clampQuickDiscount(item.quick_discount, normalLineTotal);
+        const lineTotal = normalLineTotal - discount;
+
+        return {
+          ...item,
+          qty: newQty,
+          unit_price: newQty > 0 ? lineTotal / newQty : 0,
+          line_total: Math.round(lineTotal),
+        };
+      })
     );
   };
 
@@ -332,9 +350,9 @@ export default function useTransaction() {
   // 5. CALCULATIONS (PERHITUNGAN)
   // ==========================================
   const subtotal = Math.round(cartItems.reduce((sum, item) => sum + item.line_total, 0));
-  // Total Diskon Cepat yang diberikan kasir (potongan per unit x qty).
+  // Total Diskon Cepat yang diberikan kasir (nominal total per baris).
   const itemDiscountTotal = Math.round(cartItems.reduce((sum, item) => {
-    return sum + ((Number(item.quick_discount) || 0) * item.qty);
+    return sum + (Number(item.quick_discount) || 0);
   }, 0));
   // Subtotal "harga normal" sebelum Diskon Cepat (untuk tampilan di keranjang).
   const subtotalBeforeDiscount = subtotal + itemDiscountTotal;
@@ -433,7 +451,7 @@ export default function useTransaction() {
           line_total: item.line_total,
           // Info Diskon Cepat: harga normal per unit & total potongan baris ini
           original_unit_price: Number(item.base_unit_price) || Number(item.unit_price) || 0,
-          discount_amount: (Number(item.quick_discount) || 0) * item.qty
+          discount_amount: Number(item.quick_discount) || 0
         })),
         subtotal: subtotal,
         discount: discount,

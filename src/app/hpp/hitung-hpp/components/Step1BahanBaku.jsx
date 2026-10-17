@@ -28,6 +28,19 @@ export default function Step1BahanBaku({
   onNext
 }) {
   const isModeCepat = modeInput === 'cepat';
+
+  // Format angka ribuan untuk input harga: "250000" -> "250.000"
+  // State tetap menyimpan digit mentah agar perhitungan parseFloat di parent aman.
+  const formatRibuanInput = (value) => {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleTotalModalCepatChange = (e) => {
+    // Buang semua non-digit & nol di depan, lalu simpan sebagai string digit.
+    const digits = e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    setTotalModalCepat(digits);
+  };
   
   // Tambah card bahan baku baru
   const handleAddBahanBaku = () => {
@@ -238,15 +251,19 @@ export default function Step1BahanBaku({
                 <FiDollarSign className="w-4 h-4 text-gray-500" />
                 Total Modal 1 Batch <span className="text-gray-400 font-normal">(Rp)</span>
               </label>
-              <input
-                type="number"
-                min="0"
-                step="100"
-                value={totalModalCepat}
-                onChange={(e) => setTotalModalCepat(e.target.value)}
-                placeholder="Contoh: 250000"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">Rp</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={formatRibuanInput(totalModalCepat)}
+                  onChange={handleTotalModalCepatChange}
+                  placeholder="Contoh: 250.000"
+                  aria-label="Total modal 1 batch dalam Rupiah"
+                  className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
+                />
+              </div>
               <p className="text-xs text-gray-500 mt-1">
                 Total biaya yang dikeluarkan untuk 1x produksi (bahan, kemasan, dan biaya lain yang ingin dihitung).
               </p>

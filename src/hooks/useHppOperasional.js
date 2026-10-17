@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { ACTIVE_STORE_EVENT, resolveActiveStore } from '@/lib/activeStore';
+import { MAX_TEXT_LENGTH, sanitizeText, validateSafeText } from '@/lib/inputValidation';
 
 /**
  * Hook khusus untuk mengelola Biaya Operasional Toko (Period Cost).
@@ -33,6 +34,26 @@ export default function useHppOperasional() {
       throw new Error('Jumlah biaya harus berupa Rupiah bulat lebih dari 0.');
     }
     return amount;
+  };
+
+  /**
+   * Bersihkan & validasi teks pengeluaran.
+   * Menolak input yang mengandung perintah SQL atau script (defense in depth,
+   * walau form sudah memvalidasi sebelumnya).
+   */
+  const parseExpenseText = (value, label, { required = false } = {}) => {
+    const sanitized = sanitizeText(value, MAX_TEXT_LENGTH);
+
+    if (required && !sanitized) {
+      throw new Error(`${label} wajib diisi.`);
+    }
+
+    const check = validateSafeText(sanitized, { label, maxLength: MAX_TEXT_LENGTH });
+    if (!check.isValid) {
+      throw new Error(check.message);
+    }
+
+    return check.value;
   };
 
   // 1. Fetch Store ID saat user login & listen switch store
@@ -134,12 +155,16 @@ export default function useHppOperasional() {
     setError(null);
 
     try {
+      // Validasi teks: tolak perintah SQL / script sebelum menyimpan
+      const category = parseExpenseText(expenseData.category, 'Kategori pengeluaran', { required: true });
+      const description = parseExpenseText(expenseData.description || '', 'Keterangan pengeluaran');
+
       const payload = {
         store_id: storeId,
         // Gunakan tanggal hari ini jika tidak disediakan, dengan format lokal yang aman
         expense_date: expenseData.expense_date || getTodayLocal(),
-        category: expenseData.category, 
-        description: expenseData.description || '',
+        category,
+        description,
         amount: parseExpenseAmount(expenseData.amount),
       };
 
@@ -177,10 +202,14 @@ export default function useHppOperasional() {
     setError(null);
 
     try {
+      // Validasi teks: tolak perintah SQL / script sebelum menyimpan
+      const category = parseExpenseText(updatedData.category, 'Kategori pengeluaran', { required: true });
+      const description = parseExpenseText(updatedData.description || '', 'Keterangan pengeluaran');
+
       const payload = {
         expense_date: updatedData.expense_date || getTodayLocal(),
-        category: updatedData.category,
-        description: updatedData.description,
+        category,
+        description,
         amount: parseExpenseAmount(updatedData.amount),
       };
 

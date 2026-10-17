@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FiSave, FiCalendar, FiTag, FiDollarSign, FiFileText, FiX } from 'react-icons/fi';
+import { useState, useEffect, useMemo } from 'react';
+import { FiSave, FiCalendar, FiTag, FiDollarSign, FiFileText, FiX, FiAlertCircle } from 'react-icons/fi';
+import { MAX_TEXT_LENGTH, validateSafeText } from '@/lib/inputValidation';
+
+// Pemisah ribuan mengikuti format Indonesia (titik), sama seperti tampilan Rupiah
+// lain di aplikasi. Ganti menjadi ',' bila ingin format "1,000,000".
+const THOUSAND_SEPARATOR = '.';
 
 export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCancel }) {
   const today = new Date().toLocaleDateString('sv-SE');
@@ -12,6 +17,17 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
     amount: '',
     description: ''
   });
+
+  // Pesan error dihitung otomatis dari isi keterangan.
+  // Input yang mengandung perintah SQL / script langsung ditandai merah.
+  const descriptionError = useMemo(() => {
+    if (!formData.description) return '';
+    const check = validateSafeText(formData.description, {
+      label: 'Keterangan',
+      maxLength: MAX_TEXT_LENGTH
+    });
+    return check.isValid ? '' : check.message;
+  }, [formData.description]);
 
   const categories = [
     'Gas LPG',
@@ -50,6 +66,20 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Format ribuan untuk tampilan input nominal: 250000 -> "250.000"
+  // State tetap menyimpan digit mentah agar perhitungan Number() di submit aman.
+  const formatRibuan = (value) =>
+    String(value ?? '').replace(/\B(?=(\d{3})+(?!\d))/g, THOUSAND_SEPARATOR);
+
+  // Handler khusus nominal: hanya terima digit, lalu simpan sebagai angka mentah.
+  const handleAmountChange = (e) => {
+    const digits = e.target.value
+      .replace(/\D/g, '')
+      .replace(/^0+(?=\d)/, '')
+      .slice(0, 15);
+    setFormData(prev => ({ ...prev, amount: digits }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -57,6 +87,23 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
       alert('Mohon pilih kategori pengeluaran.');
       return;
     }
+
+    // Tolak kategori/keterangan yang berisi perintah SQL atau script
+    const categoryCheck = validateSafeText(formData.category, { label: 'Kategori pengeluaran' });
+    if (!categoryCheck.isValid) {
+      alert(categoryCheck.message);
+      return;
+    }
+
+    const descriptionCheck = validateSafeText(formData.description, {
+      label: 'Keterangan',
+      maxLength: MAX_TEXT_LENGTH
+    });
+    if (!descriptionCheck.isValid) {
+      alert(descriptionCheck.message);
+      return;
+    }
+
     const amount = Number(formData.amount);
     if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
       alert('Mohon masukkan jumlah pengeluaran yang valid (lebih dari 0).');
@@ -65,9 +112,9 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
 
     onSubmit({
       expense_date: formData.date,
-      category: formData.category,
+      category: categoryCheck.value,
       amount,
-      description: formData.description.trim()
+      description: descriptionCheck.value
     });
 
     // Reset form setelah submit berhasil
@@ -153,16 +200,16 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">Rp</span>
             <input
-              type="number"
+              type="text"
               name="amount"
-              value={formData.amount}
-              onChange={handleChange}
+              value={formData.amount ? formatRibuan(formData.amount) : ''}
+              onChange={handleAmountChange}
               placeholder="0"
               inputMode="numeric"
+              autoComplete="off"
+              aria-label="Jumlah nominal pengeluaran"
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-semibold text-gray-800"
               required
-              min="1"
-              step="1"
             />
           </div>
         </div>
@@ -179,8 +226,25 @@ export default function ExpenseForm({ onSubmit, isSubmitting, editingItem, onCan
             value={formData.description}
             onChange={handleChange}
             placeholder="Contoh: Beli gas elpiji 3kg untuk produksi minggu ini"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            maxLength={MAX_TEXT_LENGTH}
+            aria-invalid={Boolean(descriptionError)}
+            aria-describedby="description-help"
+            className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-colors ${
+              descriptionError
+                ? 'border-red-400 bg-red-50 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500'
+            }`}
           />
+          {descriptionError ? (
+            <p id="description-help" className="text-xs text-red-600 mt-1.5 font-medium flex items-start gap-1.5">
+              <FiAlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>{descriptionError}</span>
+            </p>
+          ) : (
+            <p id="description-help" className="text-xs text-gray-500 mt-1.5">
+              Hanya teks biasa. Perintah SQL dan script tidak diizinkan.
+            </p>
+          )}
         </div>
 
         {/* Tombol Submit */}

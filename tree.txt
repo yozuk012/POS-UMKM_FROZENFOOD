@@ -1,6 +1,4 @@
 my-pos
-├── anti-slop
-│   └── audit-001-2026-10-02.md
 ├── public
 ├── src
 │   ├── app
@@ -139,6 +137,7 @@ my-pos
 │   │   ├── useCategories.js
 │   │   ├── useChangePassword.js
 │   │   ├── useConvertImages.js
+│   │   ├── useCopyAvailability.js
 │   │   ├── useDashboard.js
 │   │   ├── useEditProfile.js
 │   │   ├── useForgotPassword.js
@@ -156,6 +155,7 @@ my-pos
 │   ├── lib
 │   │   ├── activeStore.js
 │   │   ├── copyStoreData.js
+│   │   ├── inputValidation.js
 │   │   ├── productUtils.js
 │   │   ├── rawMaterialUtils.js
 │   │   ├── receiptLayout.js
@@ -290,6 +290,7 @@ my-pos
 ├── next.config.mjs
 ├── package-lock.json
 ├── package.json
+├── PANDUAN.txt
 ├── postcss.config.mjs
 ├── README.md
 └── tree.txt

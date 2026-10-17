@@ -1,5 +1,84 @@
 // src/lib/copyStoreData.js
-import { supabase } from '@/lib/supabase';
+import { supabase, uploadFile } from '@/lib/supabase';
+
+// ==========================================
+// HELPER GAMBAR PRODUK
+// ==========================================
+
+// Membuat nama file yang aman dipakai di Supabase Storage.
+const toFileSegment = (value) =>
+  String(value || 'produk')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'produk';
+
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
+const resolveImageExtension = (blob, imageUrl) => {
+  const typeMap = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  };
+  if (blob?.type && typeMap[blob.type]) return typeMap[blob.type];
+
+  const cleanUrl = String(imageUrl || '').split('?')[0];
+  const extension = cleanUrl.split('.').pop()?.toLowerCase();
+  return IMAGE_EXTENSIONS.includes(extension) ? extension : 'jpg';
+};
+
+/**
+ * Menyalin file gambar produk ke storage milik sendiri (folder product-toko).
+ *
+ * Penting: produk hasil "Salin Data" TIDAK boleh berbagi URL gambar dengan cabang
+ * asal. Kalau URL-nya sama, menghapus/mengganti gambar di salah satu cabang akan
+ * menghapus file yang dipakai cabang lain (gambar hilang di halaman transaksi).
+ *
+ * @returns {Promise<{ url: string|null, copied: boolean }>}
+ */
+export async function duplicateProductImage(imageUrl, productName) {
+  if (!imageUrl) return { url: null, copied: false };
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const blob = await response.blob();
+    if (!blob.size) throw new Error('File gambar kosong');
+
+    const extension = resolveImageExtension(blob, imageUrl);
+    const fileName = `${toFileSegment(productName)}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const file = new File([blob], `${fileName}.${extension}`, {
+      type: blob.type || 'image/jpeg',
+    });
+
+    const uploaded = await uploadFile(file, 'product-toko', fileName);
+    if (!uploaded.success) throw new Error(uploaded.error);
+
+    return { url: uploaded.url, copied: true };
+  } catch (err) {
+    console.warn(`Gagal menyalin file gambar "${productName}":`, err.message);
+    // Tetap simpan URL asal supaya data tidak hilang; UI punya placeholder
+    // kalau gambar benar-benar tidak bisa dimuat.
+    return { url: imageUrl, copied: false };
+  }
+}
+
+/**
+ * Memastikan URL gambar masih bisa diakses (file tidak terhapus dari storage).
+ */
+export async function isImageReachable(imageUrl) {
+  if (!imageUrl) return false;
+  try {
+    const response = await fetch(imageUrl, { cache: 'no-store' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Mengambil daftar data dari toko tertentu untuk keperluan modal Salin Data
@@ -229,9 +308,49 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
   const targetRawMaterialMap = new Map();
   (targetRawMaterials || []).forEach((rm) => targetRawMaterialMap.set(rm.name.toLowerCase().trim(), rm.id));
 
+  // 3b. Ambil produk yang sudah ada di toko target.
+  // Dipakai untuk mencegah duplikat sekaligus memperbaiki gambar produk yang
+  // sebelumnya tersalin tanpa gambar (atau gambarnya sudah terhapus dari storage).
+  const { data: targetProducts } = await supabase
+    .from('products')
+    .select('id, name, image_url')
+    .eq('store_id', targetStoreId);
+
+  const targetProductMap = new Map();
+  (targetProducts || []).forEach((p) => {
+    targetProductMap.set(p.name.toLowerCase().trim(), p);
+  });
+
   let copiedCount = 0;
+  let repairedCount = 0;
+  let skippedCount = 0;
 
   for (const prod of sourceProducts || []) {
+    const productKey = prod.name.trim().toLowerCase();
+
+    // Cegah duplikat: kalau produk dengan nama sama sudah ada di cabang tujuan,
+    // jangan buat baris baru. Cukup perbaiki gambarnya bila kosong/rusak.
+    const existingTargetProduct = targetProductMap.get(productKey);
+    if (existingTargetProduct) {
+      const existingImageOk = await isImageReachable(existingTargetProduct.image_url);
+      if (!existingImageOk) {
+        const repairedImage = await duplicateProductImage(prod.image_url, prod.name);
+        if (repairedImage.copied) {
+          const { error: repairErr } = await supabase
+            .from('products')
+            .update({ image_url: repairedImage.url })
+            .eq('id', existingTargetProduct.id);
+
+          if (!repairErr) {
+            existingTargetProduct.image_url = repairedImage.url;
+            repairedCount += 1;
+          }
+        }
+      }
+      skippedCount += 1;
+      continue;
+    }
+
     // 4a. Tangani Kategori: Jika belum ada di toko target, otomatis buatkan kategori dengan nama yang sama
     let targetCategoryId = null;
     if (prod.categories?.name) {
@@ -266,7 +385,12 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
       targetSku = `${prod.sku || 'PROD'}-T${targetStoreId}-${Date.now().toString().slice(-4)}`;
     }
 
-    // 4c. Insert Produk ke Toko Target
+    // 4c. Salin file gambar ke storage milik sendiri.
+    // Jangan memakai URL yang sama dengan cabang asal agar gambar tidak ikut
+    // terhapus ketika produk di cabang lain dihapus/diedit.
+    const targetImage = await duplicateProductImage(prod.image_url, prod.name);
+
+    // 4d. Insert Produk ke Toko Target
     const productPayload = {
       store_id: parseInt(targetStoreId, 10),
       category_id: targetCategoryId,
@@ -276,7 +400,7 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
       unit: prod.unit || 'pcs',
       base_price: prod.base_price || 0,
       hpp: prod.hpp || 0,
-      image_url: prod.image_url || null,
+      image_url: targetImage.url,
       is_active: prod.is_active !== false,
       discount_pct: prod.discount_pct || 0,
       online_markup_pct: prod.online_markup_pct || 0,
@@ -291,7 +415,13 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
     if (prodErr) throw prodErr;
     const newProductId = newProd.id;
 
-    // 4d. Salin Product Prices (Multi-channel)
+    targetProductMap.set(productKey, {
+      id: newProductId,
+      name: prod.name.trim(),
+      image_url: targetImage.url,
+    });
+
+    // 4e. Salin Product Prices (Multi-channel)
     if (prod.product_prices && prod.product_prices.length > 0) {
       const pricesToInsert = prod.product_prices.map((pp) => ({
         product_id: newProductId,
@@ -302,7 +432,7 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
       await supabase.from('product_prices').insert(pricesToInsert);
     }
 
-    // 4e. Inisialisasi Inventory Produk
+    // 4f. Inisialisasi Inventory Produk
     await supabase.from('inventory').insert({
       store_id: parseInt(targetStoreId, 10),
       product_id: newProductId,
@@ -311,7 +441,7 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
       last_updated: new Date().toISOString(),
     });
 
-    // 4f. Salin Resep (recipes) dan Bahan Resep (recipe_ingredients)
+    // 4g. Salin Resep (recipes) dan Bahan Resep (recipe_ingredients)
     const sourceRecipe = Array.isArray(prod.recipes) ? prod.recipes[0] : prod.recipes;
     if (sourceRecipe) {
       const sourceIngredients = sourceRecipe.recipe_ingredients || [];
@@ -394,7 +524,13 @@ export async function copyProducts(sourceStoreId, targetStoreId, productIds) {
     copiedCount++;
   }
 
-  return { success: true, count: copiedCount, totalSelected: productIds.length };
+  return {
+    success: true,
+    count: copiedCount,
+    repairedCount,
+    skippedCount,
+    totalSelected: productIds.length,
+  };
 }
 
 /**

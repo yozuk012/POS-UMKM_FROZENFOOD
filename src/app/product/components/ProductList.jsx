@@ -1,6 +1,6 @@
 "use client";
 
-import { FaBoxOpen, FaEdit, FaTrash, FaPowerOff, FaGlobe, FaExclamation, FaPlus } from "react-icons/fa";
+import { FaBoxOpen, FaEdit, FaTrash, FaPowerOff, FaGlobe, FaExclamation } from "react-icons/fa";
 import { FiCopy } from "react-icons/fi";
 
 // Helper lokal
@@ -29,7 +29,6 @@ export default function ProductList({
   toggleProductStatus,
   deleteProduct,
   onOpenCopyModal,
-  openAddModal,
 }) {
   const hasActiveFilters =
     searchQuery ||
@@ -53,30 +52,18 @@ export default function ProductList({
           <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
             {hasActiveFilters
               ? "Coba ubah kata kunci atau reset filter Anda."
-              : 'Belum ada produk di cabang ini. Anda dapat menyalin data produk dari cabang lain (termasuk resep & bahan baku) atau menambahkan produk baru.'}
+              : 'Belum ada produk di cabang ini. Anda dapat menyalin data produk dari cabang lain (termasuk resep & bahan baku) atau menambahkan produk baru melalui tombol di atas.'}
           </p>
-          {!hasActiveFilters && (
+          {!hasActiveFilters && onOpenCopyModal && (
             <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
-              {onOpenCopyModal && (
-                <button
-                  type="button"
-                  onClick={onOpenCopyModal}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold text-sm transition-colors border border-blue-200 active:scale-95 cursor-pointer shadow-xs"
-                >
-                  <FiCopy className="w-4 h-4 text-blue-600" />
-                  <span>Salin Produk dari Cabang Lain</span>
-                </button>
-              )}
-              {openAddModal && (
-                <button
-                  type="button"
-                  onClick={openAddModal}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-semibold text-sm transition-colors shadow-sm active:scale-95 cursor-pointer"
-                >
-                  <FaPlus className="w-3.5 h-3.5" />
-                  <span>Tambah Produk Baru</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onOpenCopyModal}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold text-sm transition-colors border border-blue-200 active:scale-95 cursor-pointer shadow-xs"
+              >
+                <FiCopy className="w-4 h-4 text-blue-600" />
+                <span>Salin Produk dari Cabang Lain</span>
+              </button>
             </div>
           )}
         </div>
@@ -94,7 +81,7 @@ export default function ProductList({
                 <div key={prod.id} className="p-3 flex gap-3 hover:bg-gray-50 active:bg-gray-100 transition-colors">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-gray-200">
                     {prod.image_url ? (
-                      <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                      <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} />
                     ) : (
                       <FaBoxOpen className="text-gray-300 text-xl" />
                     )}
@@ -133,7 +120,7 @@ export default function ProductList({
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex flex-col gap-2 mt-3 pt-2 border-t border-gray-100">
                       <div className="flex items-center gap-1.5">
                         {/* PERBAIKAN: Logika Badge Stok (Habis / Menipis / Aman) */}
                         {prod.stock === 0 ? (
@@ -154,15 +141,18 @@ export default function ProductList({
                           {prod.is_active !== false ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => openEditModal(prod)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit produk">
-                          <FaEdit size={12} />
+                      <div className="grid grid-cols-3 gap-2 w-full">
+                        <button type="button" onClick={() => openEditModal(prod)} className="min-h-11 flex items-center justify-center gap-1.5 px-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-xs font-semibold" aria-label="Edit produk">
+                          <FaEdit size={13} />
+                          <span>Edit</span>
                         </button>
-                        <button onClick={() => toggleProductStatus(prod)} title={prod.is_active !== false ? 'Nonaktifkan produk' : 'Aktifkan produk'} className={`p-1.5 rounded-lg transition-colors ${prod.is_active !== false ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`} aria-label="Toggle status produk">
-                          <FaPowerOff size={12} />
+                        <button type="button" onClick={() => toggleProductStatus(prod)} title={prod.is_active !== false ? 'Nonaktifkan produk' : 'Aktifkan produk'} className={`min-h-11 flex items-center justify-center gap-1.5 px-2 rounded-lg transition-colors text-xs font-semibold ${prod.is_active !== false ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-green-600 bg-green-50 hover:bg-green-100'}`} aria-label="Toggle status produk">
+                          <FaPowerOff size={13} />
+                          <span>{prod.is_active !== false ? 'Nonaktif' : 'Aktif'}</span>
                         </button>
-                        <button onClick={() => deleteProduct(prod.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Hapus produk">
-                          <FaTrash size={12} />
+                        <button type="button" onClick={() => deleteProduct(prod.id)} className="min-h-11 flex items-center justify-center gap-1.5 px-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-xs font-semibold" aria-label="Hapus produk">
+                          <FaTrash size={13} />
+                          <span>Hapus</span>
                         </button>
                       </div>
                     </div>
@@ -198,7 +188,7 @@ export default function ProductList({
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-gray-200">
                             {prod.image_url ? (
-                              <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
+                              <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }} />
                             ) : (
                               <FaBoxOpen className="text-gray-300" />
                             )}
@@ -267,13 +257,13 @@ export default function ProductList({
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => openEditModal(prod)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit produk">
+                          <button type="button" onClick={() => openEditModal(prod)} className="min-h-11 min-w-11 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Edit produk">
                             <FaEdit size={14} />
                           </button>
-                          <button onClick={() => toggleProductStatus(prod)} title={prod.is_active !== false ? 'Nonaktifkan produk' : 'Aktifkan produk'} className={`p-1.5 rounded-lg transition-colors ${prod.is_active !== false ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`} aria-label="Toggle status produk">
+                          <button type="button" onClick={() => toggleProductStatus(prod)} title={prod.is_active !== false ? 'Nonaktifkan produk' : 'Aktifkan produk'} className={`min-h-11 min-w-11 p-2 rounded-lg transition-colors ${prod.is_active !== false ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`} aria-label="Toggle status produk">
                             <FaPowerOff size={14} />
                           </button>
-                          <button onClick={() => deleteProduct(prod.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Hapus produk">
+                          <button type="button" onClick={() => deleteProduct(prod.id)} className="min-h-11 min-w-11 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" aria-label="Hapus produk">
                             <FaTrash size={14} />
                           </button>
                         </div>

@@ -98,3 +98,70 @@ export function getPurchaseEditValues(material) {
     stock: Number(material.qty_on_hand || 0) / factor
   };
 }
+
+/**
+ * Validasi nama bahan baku untuk mencegah input Script (XSS/HTML) dan perintah SQL (SQL Injection).
+ * @param {string} name
+ * @returns {{ isValid: boolean, error?: string }}
+ */
+export function validateRawMaterialName(name) {
+  if (!name || typeof name !== 'string') {
+    return { isValid: false, error: 'Nama bahan baku wajib diisi.' };
+  }
+
+  const trimmed = name.trim();
+  if (trimmed.length < 2) {
+    return { isValid: false, error: 'Nama bahan baku minimal 2 karakter.' };
+  }
+
+  if (trimmed.length > 100) {
+    return { isValid: false, error: 'Nama bahan baku maksimal 100 karakter.' };
+  }
+
+  // 1. Cek Script / HTML Tags Injection (XSS)
+  const scriptPattern = /<[^>]*>|<\/?[a-z][\s\S]*>|javascript\s*:|\bon\w+\s*=/i;
+  if (scriptPattern.test(trimmed) || /[<>]/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Nama bahan baku tidak boleh mengandung tag HTML, script, atau simbol < >.'
+    };
+  }
+
+  // 2. Cek Karakter dan Komentar SQL
+  const sqlCommentsOrSeparators = /(--|\/\*|\*\/|;|#)/;
+  if (sqlCommentsOrSeparators.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Nama bahan baku tidak boleh mengandung simbol SQL (; -- /* */ #).'
+    };
+  }
+
+  // Cek Pola SQL Injection umum (misal: ' OR '1'='1 atau ' OR 1=1)
+  const sqlInjectionPattern = /\b(or|and)\s+['"\d\w]+\s*=\s*['"\d\w]+/i;
+  if (sqlInjectionPattern.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Nama bahan baku terdeteksi mengandung pola SQL injection.'
+    };
+  }
+
+  // Cek Perintah / Keyword SQL berbahaya
+  const sqlKeywords = /\b(select|insert|update|delete|drop|truncate|alter|create|table|database|union|exec|execute|declare|grant|revoke)\b/i;
+  if (sqlKeywords.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Nama bahan baku tidak boleh mengandung perintah SQL (SELECT, DROP, INSERT, dll).'
+    };
+  }
+
+  // 3. Cek Karakter berbahaya lainnya
+  const unsafeChars = /[`"\$\^\\\{\}\[\]~|]/;
+  if (unsafeChars.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Nama bahan baku mengandung karakter khusus yang tidak diizinkan.'
+    };
+  }
+
+  return { isValid: true };
+}

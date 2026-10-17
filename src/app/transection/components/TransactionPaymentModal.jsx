@@ -15,6 +15,7 @@ import {
   FiSmartphone,
   FiX
 } from 'react-icons/fi';
+import { parseNumberUI } from '@/lib/productUtils';
 
 export default function TransactionPaymentModal({ 
   isOpen, 
@@ -184,21 +185,23 @@ export default function TransactionPaymentModal({
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
                   <input
-                    type="number"
-                    value={cashReceived || ''}
-                    onChange={(e) => setCashReceived(Number(e.target.value) || 0)}
-                    placeholder="0"
+                    type="text"
+                    inputMode="numeric"
+                    value={cashReceived > 0 ? cashReceived.toLocaleString('id-ID') : ''}
+                    onChange={(e) => setCashReceived(parseNumberUI(e.target.value))}
+                    placeholder="0 atau 50.000"
+                    aria-label="Nominal uang diterima"
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg font-bold text-gray-800 outline-none transition-all"
                     autoFocus
                   />
                 </div>
               </div>
               
-              <div className="grid grid-cols-4 gap-2">
-                <button onClick={() => handleQuickCash(20000)} className="py-2 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">+20rb</button>
-                <button onClick={() => handleQuickCash(50000)} className="py-2 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">+50rb</button>
-                <button onClick={() => handleQuickCash(100000)} className="py-2 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">+100rb</button>
-                <button onClick={() => handleQuickCash('pas')} className="py-2 text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">Uang Pas</button>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => handleQuickCash(20000)} className="min-h-11 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200">+20.000</button>
+                <button type="button" onClick={() => handleQuickCash(50000)} className="min-h-11 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200">+50.000</button>
+                <button type="button" onClick={() => handleQuickCash(100000)} className="min-h-11 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200">+100.000</button>
+                <button type="button" onClick={() => handleQuickCash('pas')} className="min-h-11 rounded-lg bg-green-100 px-3 py-2 text-sm font-semibold text-green-700 transition-colors hover:bg-green-200">Uang Pas</button>
               </div>
 
               <div className={`p-4 rounded-xl border-2 flex justify-between items-center transition-colors ${

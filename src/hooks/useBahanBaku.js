@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './useAuth';
-import { convertPurchaseToBase, getUnitDefinition } from '@/lib/rawMaterialUtils';
+import { convertPurchaseToBase, getUnitDefinition, validateRawMaterialName } from '@/lib/rawMaterialUtils';
 import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
 
 const isMissingPurchaseMetadata = (error) => (
@@ -124,6 +124,11 @@ export default function useBahanBaku() {
     setError(null);
 
     try {
+      const nameValidation = validateRawMaterialName(formData.name);
+      if (!nameValidation.isValid) {
+        throw new Error(nameValidation.error);
+      }
+
       // LANGKAH A: Auto Konversi Data
       const konversi = convertPurchaseToBase({
         quantity: formData.qty_beli,
@@ -203,6 +208,13 @@ export default function useBahanBaku() {
     setError(null);
 
     try {
+      if (data.name !== undefined) {
+        const nameValidation = validateRawMaterialName(data.name);
+        if (!nameValidation.isValid) {
+          throw new Error(nameValidation.error);
+        }
+      }
+
       let payloadToUpdate = { ...data };
 
       // Jika user mengupdate data harga/satuan, lakukan konversi ulang

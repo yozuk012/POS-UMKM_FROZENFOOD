@@ -3,9 +3,30 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { validateSafeText, sanitizeText } from '@/lib/inputValidation';
 
 // LIMIT TOKO DIUBAH MENJADI 10 (Sesuai saran bisnis)
-const MAX_STORE_LIMIT = 10; 
+const MAX_STORE_LIMIT = 10;
+
+// Label field untuk pesan validasi (perintah SQL & script dilarang).
+const STORE_FIELD_LABELS = {
+  name: 'Nama toko',
+  address: 'Alamat toko',
+  bank_name: 'Nama bank',
+  account_number: 'Nomor rekening',
+  account_name: 'Nama pemilik rekening',
+  qris_merchant_id: 'ID Merchant QRIS',
+};
+
+// Cek semua field teks sekaligus, kembalikan pesan error pertama (atau string kosong).
+const findValidationError = (data) => {
+  const fields = Object.entries(STORE_FIELD_LABELS);
+  for (const [field, label] of fields) {
+    const check = validateSafeText(data[field], { label });
+    if (!check.isValid) return check.message;
+  }
+  return '';
+};
 
 export function useStoreManagement() {
   // --- STATE MANAGEMENT ---
@@ -26,6 +47,10 @@ export function useStoreManagement() {
   // --- HELPER FUNCTIONS ---
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Tolak input yang mengandung perintah SQL atau script.
+    const check = validateSafeText(value, { label: STORE_FIELD_LABELS[field] || 'Input' });
+    setError(check.isValid ? null : check.message);
   };
 
   const resetForm = () => {
@@ -127,6 +152,10 @@ export function useStoreManagement() {
         throw new Error('Nama dan Alamat Toko wajib diisi.');
       }
 
+      // Validasi isi: perintah SQL & script (HTML/JavaScript) dilarang.
+      const validationError = findValidationError(formData);
+      if (validationError) throw new Error(validationError);
+
       // Upload Files ke folder masing-masing di bucket UMKM-POS
       let logoUrl = formData.logo_url;
       let qrisUrl = formData.qris_code_url;
@@ -138,16 +167,16 @@ export function useStoreManagement() {
 
       const payload = {
         user_id: user.id,
-        name: formData.name.trim(),
+        name: sanitizeText(formData.name),
         type: formData.type,
-        address: formData.address.trim(),
+        address: sanitizeText(formData.address, 500),
         logo_url: logoUrl,
         qris_code_url: qrisUrl,
-        qris_merchant_id: formData.qris_merchant_id.trim() || null,
+        qris_merchant_id: sanitizeText(formData.qris_merchant_id) || null,
         default_online_markup_pct: Number(formData.default_online_markup_pct) || 0,
-        bank_name: formData.bank_name.trim() || null,
-        account_number: formData.account_number.trim() || null,
-        account_name: formData.account_name.trim() || null,
+        bank_name: sanitizeText(formData.bank_name) || null,
+        account_number: sanitizeText(formData.account_number) || null,
+        account_name: sanitizeText(formData.account_name) || null,
         is_active: true,
       };
 
@@ -176,6 +205,10 @@ export function useStoreManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sesi berakhir.');
 
+      // Validasi isi: perintah SQL & script (HTML/JavaScript) dilarang.
+      const validationError = findValidationError(formData);
+      if (validationError) throw new Error(validationError);
+
       let logoUrl = formData.logo_url;
       let qrisUrl = formData.qris_code_url;
 
@@ -186,16 +219,16 @@ export function useStoreManagement() {
       }
 
       const payload = {
-        name: formData.name.trim(),
+        name: sanitizeText(formData.name),
         type: formData.type,
-        address: formData.address.trim(),
+        address: sanitizeText(formData.address, 500),
         logo_url: logoUrl,
         qris_code_url: qrisUrl,
-        qris_merchant_id: formData.qris_merchant_id.trim() || null,
+        qris_merchant_id: sanitizeText(formData.qris_merchant_id) || null,
         default_online_markup_pct: Number(formData.default_online_markup_pct) || 0,
-        bank_name: formData.bank_name.trim() || null,
-        account_number: formData.account_number.trim() || null,
-        account_name: formData.account_name.trim() || null,
+        bank_name: sanitizeText(formData.bank_name) || null,
+        account_number: sanitizeText(formData.account_number) || null,
+        account_name: sanitizeText(formData.account_name) || null,
       };
 
       const { error: updateError } = await supabase.from('stores').update(payload).eq('id', storeId);

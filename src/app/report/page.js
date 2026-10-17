@@ -92,7 +92,7 @@ export default function ReportPage() {
         {/* 2. Summary Cards */}
         <ReportSummaryCards summary={filteredSummary} availableProducts={availableProducts} />
 
-        {/* 3. Table & Download Button */}
+        {/* 3. Table */}
         <ReportTable reports={filteredReports} loading={loading} />
         
       </div>

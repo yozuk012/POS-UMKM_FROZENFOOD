@@ -3,36 +3,42 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AiFillHome } from "react-icons/ai";
-import { FaShoppingCart, FaCashRegister } from "react-icons/fa";
-import { TbReportAnalytics } from "react-icons/tb";
-import { FaCalculator } from "react-icons/fa6";
-import { MdHistory } from "react-icons/md";
-import { IoMdSettings } from "react-icons/io";
+import {
+  MdAssessment,
+  MdCalculate,
+  MdCategory,
+  MdHistory,
+  MdHome,
+  MdInventory2,
+  MdPayments,
+  MdPointOfSale,
+  MdSettings,
+  MdShoppingBag,
+  MdStorefront,
+} from "react-icons/md";
 import { FiLogOut, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { BiCategory } from "react-icons/bi";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { ACTIVE_STORE_EVENT, resolveActiveStore } from "@/lib/activeStore";
 
 const menuItems = [
-  { name: "Beranda", href: "/", icon: AiFillHome },
-  { name: "Produk", href: "/product", icon: FaShoppingCart },
-  { name: "Kategori", href: "/category", icon: BiCategory },
-  { name: "Transaksi", href: "/transection", icon: FaCashRegister },
-  { name: "Laporan", href: "/report", icon: TbReportAnalytics },
-  {name: "Bahan Baku", href: "/bahan-baku", icon: FaShoppingCart},
-  {name: "Pengeluaran", href: "/pengeluaran", icon: FaCashRegister},
+  { name: "Beranda", href: "/", icon: MdHome },
+  { name: "Produk", href: "/product", icon: MdShoppingBag },
+  { name: "Kategori", href: "/category", icon: MdCategory },
+  { name: "Transaksi", href: "/transection", icon: MdPointOfSale },
+  { name: "Laporan", href: "/report", icon: MdAssessment },
+  { name: "Bahan Baku", href: "/bahan-baku", icon: MdInventory2 },
+  { name: "Pengeluaran", href: "/pengeluaran", icon: MdPayments },
   { 
     name: "HPP", 
-    icon: FaCalculator,
+    icon: MdCalculate,
     children: [
       {name: "Hitung Hpp", href:"/hpp/hitung-hpp"},
       { name: "HPP Produk", href: "/hpp/hppproduk" }, // Sesuaikan dengan route folder Anda
     ]
   },
   { name: "Histori", href: "/history", icon: MdHistory },
-  { name: "Pengaturan", href: "/settings/profile", icon: IoMdSettings },
+  { name: "Pengaturan", href: "/settings/profile", icon: MdSettings },
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }) {
@@ -42,21 +48,24 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   // State untuk mengontrol dropdown HPP
   const [isHppOpen, setIsHppOpen] = useState(false);
   const [activeStoreName, setActiveStoreName] = useState(null);
+  const [activeStoreLogo, setActiveStoreLogo] = useState(null);
 
   useEffect(() => {
     if (!user?.id) {
       setActiveStoreName(null);
+      setActiveStoreLogo(null);
       return;
     }
     const fetchActiveStoreName = async () => {
       try {
         const { data: stores } = await supabase
           .from('stores')
-          .select('id, name')
+          .select('id, name, logo_url, is_active')
           .eq('user_id', user.id)
           .eq('is_active', true);
         const activeStore = resolveActiveStore(stores);
         setActiveStoreName(activeStore?.name || null);
+        setActiveStoreLogo(activeStore?.logo_url || null);
       } catch (err) {
         console.error('Failed to fetch active store name:', err);
       }
@@ -70,6 +79,14 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const handleLogout = async () => {
     await logout();
   };
+
+  // Foto profil di sidebar mengikuti logo toko aktif (fallback: logo brand merchant).
+  const storeLogo = activeStoreLogo || merchant?.store_logo_url || null;
+  const userInitial =
+    merchant?.full_name?.charAt(0).toUpperCase() ||
+    user?.email?.charAt(0).toUpperCase() ||
+    "U";
+  const storeLabel = activeStoreName || merchant?.store_name || "Toko";
 
   // Fungsi helper untuk mengecek apakah menu utama atau anaknya sedang aktif
   const isMenuActive = (item) => {
@@ -206,16 +223,26 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             </div>
           ) : (
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
-                {merchant?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0 overflow-hidden ring-1 ring-blue-100">
+                {storeLogo ? (
+                  /* eslint-disable-next-line @next/next/no-img-element -- logo dari Supabase Storage, dipakai apa adanya */
+                  <img
+                    src={storeLogo}
+                    alt={`Logo ${storeLabel}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{userInitial}</span>
+                )}
               </div>
               
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-800 truncate">
                   {merchant?.full_name || "User"}
                 </p>
-                <p className="text-xs text-gray-500 truncate" title={activeStoreName || merchant?.store_name || "Toko"}>
-                  🏪 {activeStoreName || merchant?.store_name || "Toko"}
+                <p className="text-xs text-gray-500 truncate flex items-center gap-1" title={storeLabel}>
+                  <MdStorefront className="shrink-0" aria-hidden="true" />
+                  <span className="truncate">{storeLabel}</span>
                 </p>
               </div>
               

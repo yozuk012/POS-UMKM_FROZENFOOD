@@ -1,7 +1,7 @@
 // src/app/settings/profile/stores/page.js
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useStoreManagement } from '@/hooks/useAddStore'; 
 
@@ -160,6 +160,28 @@ export default function StoresSettingsPage() {
   const activeStores = stores.filter((s) => s.is_active).length;
   const maxLimit = 10;
 
+  // --- URUTAN TOKO: toko aktif selalu tampil di posisi paling atas ---
+  // Jika localStorage belum punya toko aktif (atau isinya toko nonaktif),
+  // pakai toko aktif pertama sebagai acuan urutan.
+  const effectiveActiveStoreId = useMemo(() => {
+    const matched = stores.find((s) => String(s.id) === String(activeStoreId));
+    if (matched && matched.is_active) return String(matched.id);
+
+    const firstActive = stores.find((s) => s.is_active);
+    return firstActive ? String(firstActive.id) : null;
+  }, [stores, activeStoreId]);
+
+  const orderedStores = useMemo(() => {
+    if (!effectiveActiveStoreId) return stores;
+
+    // sort stabil: toko aktif naik ke atas, sisanya tetap sesuai created_at
+    return [...stores].sort((a, b) => {
+      const aWeight = String(a.id) === effectiveActiveStoreId ? 0 : 1;
+      const bWeight = String(b.id) === effectiveActiveStoreId ? 0 : 1;
+      return aWeight - bWeight;
+    });
+  }, [stores, effectiveActiveStoreId]);
+
   // --- KONFIGURASI DIALOG ---
   const getDialogConfig = () => {
     const { type, store } = actionDialog;
@@ -211,8 +233,8 @@ export default function StoresSettingsPage() {
           activeStores={activeStores}
           maxLimit={maxLimit}
           onAddStoreClick={openAddModal}
-          stores={stores}
-          activeStoreId={activeStoreId}
+          stores={orderedStores}
+          activeStoreId={effectiveActiveStoreId}
           onSwitchStore={handleSwitchStore}
         />
 
@@ -224,8 +246,8 @@ export default function StoresSettingsPage() {
           </div>
         ) : (
           <StoreList 
-            stores={stores}
-            activeStoreId={activeStoreId}
+            stores={orderedStores}
+            activeStoreId={effectiveActiveStoreId}
             onSwitchStore={handleSwitchStore}
             onEdit={handleOpenEdit}
             onToggleStatus={(store) => openActionDialog('toggle', store)}

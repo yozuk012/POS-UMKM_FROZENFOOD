@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { HiDownload, HiChevronLeft, HiChevronRight } from "react-icons/hi";
-import * as XLSX from "xlsx"; // Import library xlsx
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 
 // Helper untuk format tanggal (DD-MM-YYYY)
 const formatDate = (dateString) => {
@@ -40,51 +39,6 @@ export default function ReportTable({ reports = [], loading }) {
   // Derived state for current page items
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentReports = reports.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleDownload = () => {
-    if (reports.length === 0) {
-      alert("Tidak ada data untuk diunduh.");
-      return;
-    }
-
-    // 1. Format data agar sesuai dengan kolom Excel yang diinginkan
-    // Download semua laporan hasil filter (bukan hanya halaman saat ini)
-    const excelData = reports.map((report, index) => ({
-      "No": index + 1,
-      "Order Id": `#${report.orderId}`,
-      "Customer": report.customerName,
-      "Date": formatDate(report.dateTime),
-      "Amount": report.totalSales, // Angka mentah agar bisa dijumlahkan di Excel
-      "Status": report.status,
-      "Jenis Penjualan": report.channel,
-    }));
-
-    // 2. Buat Worksheet dari data JSON
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-    // Opsional: Atur lebar kolom agar rapi saat dibuka di Excel
-    const colWidths = [
-      { wch: 5 },  // No
-      { wch: 15 }, // Order Id
-      { wch: 25 }, // Customer
-      { wch: 15 }, // Date
-      { wch: 15 }, // Amount
-      { wch: 20 }, // Status
-      { wch: 15 }, // Jenis Penjualan
-    ];
-    worksheet["!cols"] = colWidths;
-
-    // 3. Buat Workbook baru dan tambahkan Worksheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
-
-    // 4. Generate nama file dengan tanggal hari ini (contoh: Laporan_Penjualan_2026-09-24.xlsx)
-    const today = new Date().toISOString().split("T")[0];
-    const fileName = `Laporan_Penjualan_${today}.xlsx`;
-
-    // 5. Trigger download file ke perangkat pengguna
-    XLSX.writeFile(workbook, fileName);
-  };
 
   if (loading) {
     return (
@@ -235,17 +189,6 @@ export default function ReportTable({ reports = [], loading }) {
           </div>
         </div>
       )}
-
-      {/* Tombol Download */}
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={handleDownload}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto bg-[#8B0000] hover:bg-[#660000] text-white font-bold py-2.5 px-6 rounded-full text-sm shadow-md transition-all duration-200 active:scale-95"
-        >
-          <HiDownload className="w-5 h-5" />
-          DOWNLOAD EXCEL
-        </button>
-      </div>
 
     </div>
   );

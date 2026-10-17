@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FiX, FiInfo } from 'react-icons/fi';
-import { getPurchaseEditValues } from '@/lib/rawMaterialUtils';
+import { getPurchaseEditValues, validateRawMaterialName } from '@/lib/rawMaterialUtils';
 
 export default function BahanBakuFormModal({ 
   isOpen, 
@@ -22,12 +22,15 @@ export default function BahanBakuFormModal({
     shelf_life_days: ''
   });
 
+  const [nameError, setNameError] = useState('');
+
   // Reset atau isi form saat modal dibuka / item berubah
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNameError('');
       if (editingItem) {
         const purchaseValues = getPurchaseEditValues(editingItem);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData({
           name: editingItem.name || '',
           qty_beli: String(purchaseValues.quantity),
@@ -59,13 +62,31 @@ export default function BahanBakuFormModal({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Real-time validasi nama bahan baku
+    if (name === 'name') {
+      if (!value.trim()) {
+        setNameError('');
+      } else {
+        const validation = validateRawMaterialName(value);
+        setNameError(validation.isValid ? '' : validation.error);
+      }
+    }
   };
 
   // Handle submit form
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validasi sederhana
+    // Validasi format dan keamanan nama bahan baku (Anti-SQL & Anti-Script)
+    const nameValidation = validateRawMaterialName(formData.name);
+    if (!nameValidation.isValid) {
+      setNameError(nameValidation.error);
+      alert(nameValidation.error);
+      return;
+    }
+
+    // Validasi kelengkapan field lainnya
     if (!formData.name.trim() || !formData.qty_beli || !formData.satuan_beli || !formData.total_harga_beli) {
       alert('Mohon lengkapi Nama, Jumlah Beli, Satuan, dan Total Harga Beli!');
       return;
@@ -122,9 +143,18 @@ export default function BahanBakuFormModal({
               value={formData.name}
               onChange={handleChange}
               placeholder="Contoh: Daging Ayam Giling, Tepung Tapioka"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
+                nameError
+                  ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                  : 'border-gray-300 focus:ring-blue-500'
+              }`}
               required
             />
+            {nameError && (
+              <p className="text-xs text-red-500 mt-1 font-medium flex items-center gap-1">
+                <span>⚠</span> {nameError}
+              </p>
+            )}
           </div>
 
           {/* Baris 1: Jumlah Beli & Satuan Beli */}

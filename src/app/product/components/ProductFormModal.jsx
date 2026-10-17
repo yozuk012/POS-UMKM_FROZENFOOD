@@ -106,6 +106,9 @@ export default function ProductFormModal({
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
+                  maxLength={120}
+                  autoComplete="off"
+                  aria-invalid={Boolean(error && !formData.name.trim())}
                   placeholder="Misal: Nugget Ayam Original 500gr"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />

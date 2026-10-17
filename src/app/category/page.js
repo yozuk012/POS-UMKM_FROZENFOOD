@@ -3,12 +3,14 @@
 import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import useCategories from "@/hooks/useCategories";
+import useCopyAvailability from "@/hooks/useCopyAvailability";
 import CopyDataModal from "@/components/CopyDataModal";
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaFolderOpen } from "react-icons/fa";
 import { FiCopy } from "react-icons/fi";
 
 export default function CategoriesPage() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const { canCopy } = useCopyAvailability();
 
   // Ambil semua state dan handler dari hook
   const {
@@ -31,14 +33,16 @@ export default function CategoriesPage() {
           <p className="text-gray-500 text-xs mt-0.5">Kelompokkan produk agar rapi saat transaksi.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsCopyModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium rounded-lg shadow-xs transition-colors"
-            title="Salin kategori dari cabang lain"
-          >
-            <FiCopy size={13} className="text-blue-600" />
-            <span>Salin Kategori</span>
-          </button>
+          {canCopy && (
+            <button
+              onClick={() => setIsCopyModalOpen(true)}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium rounded-lg shadow-xs transition-colors"
+              title="Salin kategori dari cabang lain"
+            >
+              <FiCopy size={13} className="text-blue-600" />
+              <span>Salin Kategori</span>
+            </button>
+          )}
           <button
             onClick={openAddModal}
             className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm"
@@ -61,13 +65,15 @@ export default function CategoriesPage() {
             <FaFolderOpen className="mx-auto text-3xl text-gray-300 mb-2" />
             <p className="text-sm font-medium text-gray-700">Belum ada kategori</p>
             <p className="text-xs mt-1">Klik tombol &quot;Tambah&quot; atau salin dari cabang toko lain.</p>
-            <button
-              onClick={() => setIsCopyModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 mt-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
-            >
-              <FiCopy size={13} />
-              <span>Salin Kategori dari Cabang Lain</span>
-            </button>
+            {canCopy && (
+              <button
+                onClick={() => setIsCopyModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 mt-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
+              >
+                <FiCopy size={13} />
+                <span>Salin Kategori dari Cabang Lain</span>
+              </button>
+            )}
           </div>
         ) : (
           <>

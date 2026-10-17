@@ -1,19 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/PageLayout';
 
 // PERBAIKAN: Pastikan path import sesuai dengan nama file hook Anda
 import useBahanBaku from '@/hooks/useBahanBaku';
+import useCopyAvailability from '@/hooks/useCopyAvailability';
 
 import BahanBakuList from './components/BahanBakuList';
 import BahanBakuFormModal from './components/BahanBakuFormModal';
 import CopyDataModal from '@/components/CopyDataModal';
-import { FiPlus, FiSearch, FiArrowLeft, FiCopy } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiCopy } from 'react-icons/fi';
 
 export default function BahanBakuPage() {
-  const router = useRouter();
   
   // 1. Panggil Hook
   const { 
@@ -32,6 +31,7 @@ export default function BahanBakuPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null); 
+  const { canCopy } = useCopyAvailability();
 
   // 3. Filter Data berdasarkan Search (Case-insensitive)
   const filteredBahanBaku = bahanBaku.filter(item => 
@@ -94,27 +94,23 @@ export default function BahanBakuPage() {
         {/* Header Halaman */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <button 
-              onClick={() => router.back()} 
-              className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2 text-sm font-medium transition-colors"
-            >
-              <FiArrowLeft className="w-4 h-4" /> Kembali
-            </button>
             <h1 className="text-2xl font-bold text-gray-800">Manajemen Bahan Baku</h1>
             <p className="text-sm text-gray-500">Kelola stok bahan mentah, kemasan, dan harga modal Anda</p>
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setIsCopyModalOpen(true)}
-              disabled={isMutating}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
-              title="Salin bahan baku dari cabang lain"
-            >
-              <FiCopy className="w-5 h-5 text-blue-600" />
-              <span>Salin Bahan Baku</span>
-            </button>
+            {canCopy && (
+              <button
+                type="button"
+                onClick={() => setIsCopyModalOpen(true)}
+                disabled={isMutating}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
+                title="Salin bahan baku dari cabang lain"
+              >
+                <FiCopy className="w-5 h-5 text-blue-600" />
+                <span>Salin Bahan Baku</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleAddNew}
@@ -146,8 +142,7 @@ export default function BahanBakuPage() {
           error={error}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onOpenCopyModal={() => setIsCopyModalOpen(true)}
-          onAddNew={handleAddNew}
+          onOpenCopyModal={canCopy ? () => setIsCopyModalOpen(true) : null}
         />
 
         {/* Modal Form */}

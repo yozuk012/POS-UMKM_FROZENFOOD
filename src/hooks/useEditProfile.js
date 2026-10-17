@@ -4,6 +4,32 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { useAuth } from './useAuth';
 import { useConvert } from './useConvertImages'; // Pastikan path ini sesuai dengan project Anda
+import { validateSafeText, sanitizeText } from '@/lib/inputValidation';
+
+// Label field untuk pesan validasi (perintah SQL & script dilarang).
+const MERCHANT_FIELD_LABELS = {
+  full_name: 'Nama lengkap',
+  phone: 'Nomor telepon',
+  store_name: 'Nama brand toko',
+};
+
+const STORE_FIELD_LABELS = {
+  name: 'Nama toko',
+  address: 'Alamat toko',
+  bank_name: 'Nama bank',
+  account_number: 'Nomor rekening',
+  account_name: 'Nama pemilik rekening',
+  qris_merchant_id: 'ID Merchant QRIS',
+};
+
+// Cek semua field sekaligus, kembalikan pesan error pertama (atau string kosong).
+const findValidationError = (fields) => {
+  for (const [label, value] of fields) {
+    const check = validateSafeText(value, { label });
+    if (!check.isValid) return check.message;
+  }
+  return '';
+};
 
 export function useEditProfile() {
   const { user } = useAuth();
@@ -148,16 +174,22 @@ export function useEditProfile() {
   const handleMerchantChange = (e) => {
     const { name, value } = e.target;
     setMerchantForm(prev => ({ ...prev, [name]: value }));
-    setError(null);
+
+    // Tolak input yang mengandung perintah SQL atau script.
+    const check = validateSafeText(value, { label: MERCHANT_FIELD_LABELS[name] || 'Input' });
+    setError(check.isValid ? null : check.message);
     setSuccessMessage('');
   };
 
   const handleStoreChange = (e) => {
     const { name, value, type, checked } = e.target;
     const finalValue = type === 'checkbox' ? checked : value;
-    
+
     setStoreForm(prev => ({ ...prev, [name]: finalValue }));
-    setError(null);
+
+    // Tolak input yang mengandung perintah SQL atau script.
+    const check = validateSafeText(finalValue, { label: STORE_FIELD_LABELS[name] || 'Input' });
+    setError(check.isValid ? null : check.message);
     setSuccessMessage('');
   };
 
@@ -208,6 +240,20 @@ export function useEditProfile() {
     if (!storeForm.name.trim()) return setError('Nama toko wajib diisi.');
     if (!storeForm.id) return setError('Data toko tidak ditemukan. Pastikan Anda memiliki toko yang aktif.');
 
+    // Validasi isi: perintah SQL & script (HTML/JavaScript) dilarang.
+    const validationError = findValidationError([
+      [MERCHANT_FIELD_LABELS.full_name, merchantForm.full_name],
+      [MERCHANT_FIELD_LABELS.phone, merchantForm.phone],
+      [MERCHANT_FIELD_LABELS.store_name, merchantForm.store_name],
+      [STORE_FIELD_LABELS.name, storeForm.name],
+      [STORE_FIELD_LABELS.address, storeForm.address],
+      [STORE_FIELD_LABELS.bank_name, storeForm.bank_name],
+      [STORE_FIELD_LABELS.account_number, storeForm.account_number],
+      [STORE_FIELD_LABELS.account_name, storeForm.account_name],
+      [STORE_FIELD_LABELS.qris_merchant_id, storeForm.qris_merchant_id],
+    ]);
+    if (validationError) return setError(validationError);
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage('');
@@ -238,9 +284,9 @@ export function useEditProfile() {
       const { error: merchantError } = await supabase
         .from('merchants')
         .update({
-          full_name: merchantForm.full_name.trim(),
-          phone: merchantForm.phone.trim(),
-          store_name: merchantForm.store_name.trim(),
+          full_name: sanitizeText(merchantForm.full_name),
+          phone: sanitizeText(merchantForm.phone),
+          store_name: sanitizeText(merchantForm.store_name),
           store_logo_url: finalLogoUrl, // Opsional: jika ingin logo brand utama juga tersimpan di sini
         })
         .eq('id', user.id);
@@ -249,13 +295,13 @@ export function useEditProfile() {
 
       // 4. Update Tabel Stores
       const storePayload = {
-        name: storeForm.name.trim(),
-        address: storeForm.address.trim(),
-        bank_name: storeForm.bank_name.trim(),
-        account_number: storeForm.account_number.trim(),
-        account_name: storeForm.account_name.trim(),
-        default_online_markup_pct: parseInt(storeForm.default_online_markup_pct) || 0,
-        qris_merchant_id: storeForm.qris_merchant_id.trim(),
+        name: sanitizeText(storeForm.name),
+        address: sanitizeText(storeForm.address, 500),
+        bank_name: sanitizeText(storeForm.bank_name),
+        account_number: sanitizeText(storeForm.account_number),
+        account_name: sanitizeText(storeForm.account_name),
+        default_online_markup_pct: parseInt(storeForm.default_online_markup_pct, 10) || 0,
+        qris_merchant_id: sanitizeText(storeForm.qris_merchant_id),
         logo_url: finalLogoUrl,
         qris_code_url: finalQrisUrl,
       };

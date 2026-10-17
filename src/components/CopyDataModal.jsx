@@ -167,9 +167,19 @@ export default function CopyDataModal({ isOpen, onClose, type, title, onCopySucc
 
     try {
       const result = await executeCopyStoreData(type, sourceStoreId, targetStoreId, selectedIds);
+
+      const detailParts = [];
+      if (result.repairedCount > 0) {
+        detailParts.push(`${result.repairedCount} gambar diperbarui`);
+      }
+      if (result.skippedCount > 0) {
+        detailParts.push(`${result.skippedCount} dilewati karena sudah ada`);
+      }
+
       setStatusMessage({
         type: 'success',
-        text: `Berhasil menyalin ${result.count} ${title} ke cabang "${targetStore?.name}".`,
+        text: `Berhasil menyalin ${result.count} ${title} ke cabang "${targetStore?.name}".` +
+          (detailParts.length > 0 ? ` (${detailParts.join(', ')})` : ''),
       });
 
       // Panggil callback refresh halaman jika toko target adalah toko aktif saat ini

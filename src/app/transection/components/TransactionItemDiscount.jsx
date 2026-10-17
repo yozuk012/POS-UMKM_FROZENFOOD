@@ -4,8 +4,8 @@
 // Kasir mengisi NOMINAL (Rp), bukan persentase:
 //   - mode "Potongan (Rp)"   -> kasir mengetik potongan, mis. 5.000
 //   - mode "Harga Jual (Rp)" -> kasir mengetik harga akhir, mis. 25.000
-// Keduanya menghasilkan hal yang sama: harga 30.000 dikurangi 5.000 = 25.000.
-// Potongan dihitung PER PCS (qty x potongan) dan hanya tersedia di cabang utama
+// Keduanya menghasilkan hal yang sama: total 30.000 dikurangi 5.000 = 25.000.
+// Potongan dihitung PER BARIS transaksi dan hanya tersedia di cabang utama
 // (pengecekan cabang dilakukan oleh TransactionOrderSummary / useTransaction).
 'use client';
 
@@ -26,9 +26,10 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
   const [mode, setMode] = useState(QUICK_DISCOUNT_MODE.POTONGAN);
   const [draft, setDraft] = useState('');
 
-  const normalPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
+  const normalUnitPrice = Number(item.base_unit_price) || Number(item.unit_price) || 0;
   const currentDiscount = Number(item.quick_discount) || 0;
   const qty = Number(item.qty) || 0;
+  const normalPrice = normalUnitPrice * qty;
 
   // Buka panel: draft selalu dimulai dari diskon yang sedang aktif.
   const openPanel = () => {
@@ -41,7 +42,9 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
   const hasInput = draft.trim() !== '';
   const preview = resolveQuickDiscount({ normalPrice, mode, value: inputValue });
   const canSave = hasInput && preview.isValid;
-  const finalUnitPrice = canSave ? preview.finalPrice : normalPrice;
+  const finalUnitPrice = qty > 0
+    ? (canSave ? preview.finalPrice : normalPrice) / qty
+    : 0;
   const presets = PRESET_DISCOUNTS.filter((amount) => amount <= normalPrice);
 
   const handleSave = () => {
@@ -62,7 +65,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
   };
 
   // ---------------------------------------------------------------
-  // Tampilan tertutup: tombol kecil "Diskon Cepat"
+  // Tombol pembuka dibuat penuh lebar agar mudah ditemukan di keranjang.
   // ---------------------------------------------------------------
   if (!isOpen) {
     return (
@@ -70,7 +73,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
         type="button"
         onClick={openPanel}
         title="Beri potongan harga (Rp) untuk item ini"
-        className={`mt-2 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
+        className={`mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition-colors ${
           currentDiscount > 0
             ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
             : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
@@ -78,7 +81,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
       >
         <FiTag className="h-3 w-3" />
         {currentDiscount > 0
-          ? `Diskon ${formatRupiah(currentDiscount)}/pcs`
+          ? `Diskon ${formatRupiah(currentDiscount)}`
           : 'Diskon Cepat'}
       </button>
     );
@@ -87,12 +90,12 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
   return (
     <div className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50/60 p-2.5">
       {/* Pilihan mode input */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex overflow-hidden rounded-md border border-amber-200 bg-white">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid grid-cols-2 overflow-hidden rounded-md border border-amber-200 bg-white">
           <button
             type="button"
             onClick={() => switchMode(QUICK_DISCOUNT_MODE.POTONGAN)}
-            className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
+            className={`min-h-10 px-2 py-2 text-xs font-semibold transition-colors ${
               mode === QUICK_DISCOUNT_MODE.POTONGAN
                 ? 'bg-amber-500 text-white'
                 : 'text-gray-600 hover:bg-amber-50'
@@ -103,7 +106,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
           <button
             type="button"
             onClick={() => switchMode(QUICK_DISCOUNT_MODE.HARGA)}
-            className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
+            className={`min-h-10 px-2 py-2 text-xs font-semibold transition-colors ${
               mode === QUICK_DISCOUNT_MODE.HARGA
                 ? 'bg-amber-500 text-white'
                 : 'text-gray-600 hover:bg-amber-50'
@@ -117,7 +120,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
           type="button"
           onClick={() => setIsOpen(false)}
           title="Tutup tanpa menyimpan"
-          className="rounded p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-600"
+          className="self-end rounded p-2 text-gray-400 transition-colors hover:bg-white hover:text-gray-600 sm:self-auto"
         >
           <FiX className="h-4 w-4" />
         </button>
@@ -140,13 +143,13 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
 
       {/* Tombol nominal cepat (mode potongan) */}
       {mode === QUICK_DISCOUNT_MODE.POTONGAN && presets.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {presets.map((amount) => (
             <button
               key={amount}
               type="button"
               onClick={() => setDraft(String(amount))}
-              className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
+              className={`min-h-11 rounded-lg border px-2 py-2 text-xs font-bold transition-colors ${
                 inputValue === amount
                   ? 'border-amber-400 bg-amber-500 text-white'
                   : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-100'
@@ -161,17 +164,17 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
       {/* Pratinjau perhitungan */}
       <div className="space-y-1 rounded-md border border-amber-100 bg-white p-2 text-[11px]">
         <div className="flex justify-between text-gray-500">
-          <span>Harga normal / pcs</span>
+          <span>Harga normal ({qty} {item.unit || 'pcs'})</span>
           <span className="font-semibold text-gray-700">{formatRupiah(normalPrice)}</span>
         </div>
         <div className="flex justify-between text-gray-500">
-          <span>Potongan / pcs</span>
+          <span>Potongan total</span>
           <span className={`font-semibold ${canSave && preview.discount > 0 ? 'text-red-600' : 'text-gray-700'}`}>
             {canSave && preview.discount > 0 ? `-${formatRupiah(preview.discount)}` : formatRupiah(0)}
           </span>
         </div>
         <div className="flex justify-between border-t border-amber-100 pt-1">
-          <span className="font-semibold text-gray-700">Harga jual / pcs</span>
+          <span className="font-semibold text-gray-700">Harga jual / {qty} {item.unit || 'pcs'}</span>
           <span className="font-bold text-blue-700">{formatRupiah(finalUnitPrice)}</span>
         </div>
         <div className="flex justify-between text-gray-500">
@@ -186,8 +189,8 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
       {hasInput && !preview.isValid && (
         <p className="text-[11px] font-medium leading-snug text-red-600">
           {mode === QUICK_DISCOUNT_MODE.POTONGAN
-            ? `Potongan tidak boleh melebihi harga normal (${formatRupiah(normalPrice)}).`
-            : `Harga jual tidak boleh lebih dari harga normal (${formatRupiah(normalPrice)}).`}
+            ? `Potongan tidak boleh melebihi total harga normal (${formatRupiah(normalPrice)}).`
+            : `Harga jual total tidak boleh lebih dari total harga normal (${formatRupiah(normalPrice)}).`}
         </p>
       )}
 
@@ -214,7 +217,7 @@ export default function TransactionItemDiscount({ item, onApply, onClear }) {
       </div>
 
       <p className="text-[10px] leading-snug text-amber-700">
-        Potongan dihitung <strong>per pcs</strong> (qty &times; potongan) dan hanya tersedia di
+        Potongan dihitung <strong>per baris transaksi</strong> dan hanya tersedia di
         Cabang Utama.
       </p>
     </div>

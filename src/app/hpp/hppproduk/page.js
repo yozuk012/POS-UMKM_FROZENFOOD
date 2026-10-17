@@ -65,7 +65,7 @@ export default function HPPProdukPage() {
 
   return (
     <PageLayout title="HPP Produk">
-      <div className="min-h-screen bg-gray-50 -mx-4 -mt-4 md:-mx-6 md:-mt-6 relative">
+      <div className="min-h-screen bg-gray-50 -mx-4 -mt-4 md:-mx-6 md:-mt-6">
         
         {/* Header & Filter Kategori */}
         <HPPHeader 
@@ -78,7 +78,29 @@ export default function HPPProdukPage() {
         />
 
         {/* Area Daftar Produk */}
-        <main className="px-4 py-6">
+        <main className="px-4 py-6 max-w-4xl mx-auto">
+
+          {/* Tombol tambah di atas daftar (konsisten dengan halaman lain) */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-gray-800">Daftar Produk HPP</h2>
+              <p className="text-sm text-gray-500 break-words">
+                {filteredProducts.length} produk
+                {selectedKategori ? ` · Kategori: ${selectedKategori}` : ''}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push('/hpp/hitung-hpp')}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all active:scale-95"
+              title="Hitung HPP Produk Baru"
+            >
+              <FiPlus className="w-5 h-5" />
+              <span>Tambah HPP Baru</span>
+            </button>
+          </div>
+
           <HPPProductList 
             products={filteredProducts}
             isLoading={isLoading}
@@ -88,18 +110,6 @@ export default function HPPProdukPage() {
             formatRupiah={formatRupiah}
           />
         </main>
-
-        {/* Floating Action Button (FAB) untuk Tambah HPP Baru */}
-        {/* Menggantikan tombol "LANJUT" yang kurang logis di halaman daftar */}
-        <button
-          onClick={() => router.push('/hpp/hitung-hpp')}
-          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all flex items-center gap-2 z-30 hover:scale-105 active:scale-95"
-          title="Hitung HPP Produk Baru"
-        >
-          <FiPlus className="w-5 h-5" />
-          <span className="hidden md:inline">TAMBAH HPP BARU</span>
-          <span className="md:hidden">TAMBAH</span>
-        </button>
 
       </div>
     </PageLayout>

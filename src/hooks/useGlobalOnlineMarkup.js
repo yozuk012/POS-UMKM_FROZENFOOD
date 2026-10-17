@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase';
 
 // Helper hitung harga online (sama dengan di productUtils)
 const calculateOnlinePrice = (basePrice, markupPct) => {
-  return Math.round(basePrice * (1 + markupPct / 100));
+  const calculatedPrice = basePrice * (1 + markupPct / 100);
+  return Math.round(calculatedPrice / 500) * 500;
 };
 
 export function useGlobalOnlineMarkup() {

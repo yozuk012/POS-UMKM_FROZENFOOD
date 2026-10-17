@@ -7,6 +7,17 @@ import { useConvert } from './useConvertImages';
 import { ACTIVE_STORE_EVENT, getActiveStoreId, resolveActiveStore } from '@/lib/activeStore';
 import { getOnlinePrice } from '@/lib/productUtils';
 
+const UNSAFE_PRODUCT_NAME_PATTERNS = [
+  /<\/?[a-z][^>]*>/i,
+  /(?:javascript|vbscript|data):/i,
+  /\bon(?:abort|error|load|click|mouseover|submit)\s*=/i,
+  /(?:select\s+.+\s+from|insert\s+into|update\s+.+\s+set|delete\s+from|drop\s+(?:table|database)|alter\s+table|union\s+select)/i,
+  /(?:--|\/\*|\*\/|;\s*(?:select|insert|update|delete|drop|alter)\b)/i,
+];
+
+const isUnsafeProductName = (name) =>
+  UNSAFE_PRODUCT_NAME_PATTERNS.some((pattern) => pattern.test(name));
+
 export function useProducts() {
   const { user } = useAuth();
   const { convertToWebP } = useConvert();
@@ -77,6 +88,34 @@ export function useProducts() {
       }
     } catch (err) {
       console.error('Error parsing image URL for deletion:', err);
+    }
+  };
+
+  // Cek apakah file gambar masih dipakai produk lain (mis. hasil "Salin Produk"
+  // antar cabang yang dulu memakai URL yang sama). Jika masih dipakai, file TIDAK
+  // boleh dihapus supaya cabang lain tidak kehilangan gambar.
+  const isImageStillUsed = async (imageUrl, excludeProductId = null) => {
+    if (!imageUrl) return false;
+    try {
+      let query = supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('image_url', imageUrl);
+
+      if (excludeProductId) {
+        query = query.neq('id', excludeProductId);
+      }
+
+      const { count, error } = await query;
+      if (error) {
+        console.warn('Gagal memeriksa pemakaian gambar:', error.message);
+        return true; // anggap masih dipakai agar file tidak terhapus
+      }
+
+      return (count || 0) > 0;
+    } catch (err) {
+      console.warn('Gagal memeriksa pemakaian gambar:', err.message);
+      return true;
     }
   };
 
@@ -278,6 +317,11 @@ export function useProducts() {
   // ==========================================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === 'name' && isUnsafeProductName(value)) {
+      setError('Nama produk tidak boleh berisi script, tag HTML, atau perintah SQL.');
+      return;
+    }
     
     setFormData((prev) => {
       let finalValue = type === 'checkbox' ? checked : value;
@@ -379,6 +423,9 @@ export function useProducts() {
     if (!formData.store_id) return setError('Pilih toko terlebih dahulu.');
     if (!formData.category_id) return setError('Pilih kategori produk.');
     if (!formData.name.trim()) return setError('Nama produk wajib diisi.');
+    if (isUnsafeProductName(formData.name)) {
+      return setError('Nama produk tidak boleh berisi script, tag HTML, atau perintah SQL.');
+    }
 
     const stockVal = parseNumber(formData.stock);
     const basePrice = parseDecimal(formData.base_price);
@@ -395,7 +442,10 @@ export function useProducts() {
     try {
       let finalImageUrl = existingImageUrl;
       if (formData.image_file) {
-        if (existingImageUrl) await deleteImageFromStorage(existingImageUrl); 
+        // Hapus gambar lama hanya jika tidak dipakai produk lain.
+        if (existingImageUrl && !(await isImageStillUsed(existingImageUrl, editingId))) {
+          await deleteImageFromStorage(existingImageUrl);
+        } 
         
         const fileName = `prod-${Date.now()}-${formData.image_file.name.replace(/\s/g, '-')}`;
         const uploadResult = await uploadFile(formData.image_file, 'product-toko', fileName);
@@ -504,7 +554,7 @@ export function useProducts() {
     if (!window.confirm('Yakin ingin menghapus produk ini secara permanen?')) return;
 
     const productToDelete = products.find(p => p.id === id);
-    if (productToDelete?.image_url) {
+    if (productToDelete?.image_url && !(await isImageStillUsed(productToDelete.image_url, productToDelete.id))) {
       await deleteImageFromStorage(productToDelete.image_url);
     }
 

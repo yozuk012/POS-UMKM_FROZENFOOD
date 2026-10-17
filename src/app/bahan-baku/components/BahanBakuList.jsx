@@ -1,7 +1,7 @@
 // src/app/bahan-baku/components/BahanBakuList.jsx
 'use client';
 
-import { FiPackage, FiEdit2, FiTrash2, FiAlertCircle, FiCopy, FiPlus } from 'react-icons/fi';
+import { FiPackage, FiEdit2, FiTrash2, FiAlertCircle, FiCopy } from 'react-icons/fi';
 import { formatCompactRupiah, getPurchaseDisplay } from '@/lib/rawMaterialUtils';
 
 export default function BahanBakuList({ 
@@ -10,8 +10,7 @@ export default function BahanBakuList({
   error, 
   onEdit, 
   onDelete,
-  onOpenCopyModal,
-  onAddNew 
+  onOpenCopyModal
 }) {
   // State Loading
   if (isLoading) {
@@ -40,10 +39,10 @@ export default function BahanBakuList({
         <FiPackage className="w-14 h-14 text-gray-400 mx-auto mb-3" />
         <h3 className="text-xl font-bold text-gray-800 mb-1">Belum Ada Bahan Baku</h3>
         <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-          Belum ada bahan baku di cabang ini. Anda dapat menyalin data bahan baku dari cabang lain atau menambahkan bahan baku baru secara manual.
+          Belum ada bahan baku di cabang ini. Anda dapat menyalin data bahan baku dari cabang lain atau menambahkan bahan baku baru melalui tombol tambah di atas.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          {onOpenCopyModal && (
+        {onOpenCopyModal && (
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={onOpenCopyModal}
@@ -52,18 +51,8 @@ export default function BahanBakuList({
               <FiCopy className="w-4 h-4 text-blue-600" />
               <span>Salin Bahan Baku dari Cabang Lain</span>
             </button>
-          )}
-          {onAddNew && (
-            <button
-              type="button"
-              onClick={onAddNew}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-semibold transition-colors shadow-sm active:scale-95 cursor-pointer"
-            >
-              <FiPlus className="w-4 h-4" />
-              <span>Tambah Bahan Baku</span>
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }

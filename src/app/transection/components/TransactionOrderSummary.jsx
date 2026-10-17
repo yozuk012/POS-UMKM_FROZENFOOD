@@ -110,7 +110,7 @@ export default function TransactionOrderSummary({
                     {/* Badge Diskon Cepat (nominal Rp) */}
                     {quickDiscount > 0 && (
                       <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold">
-                        -{formatRupiah(quickDiscount)}/pcs
+                        -{formatRupiah(quickDiscount)}
                       </span>
                     )}
                   </p>
