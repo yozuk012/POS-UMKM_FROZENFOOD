@@ -193,14 +193,14 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <input 
-                    id="logo-dropzone" 
-                    name="logo" 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleFileChange}
-                    capture="environment"
-                  />
+                  id="logo-dropzone" 
+                  name="logo" 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/png, image/jpeg, image/jpg" // Lebih spesifik agar iOS membuka galeri
+                  onChange={handleFileChange}
+                  // Atribut 'capture' dihapus total
+                />
                 </label>
               </div>
             </div>
